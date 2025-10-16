@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - TikTalk</title>
+    <link rel="stylesheet" href="/styles/PageTemplate.css">
+    <style>
+        .admin-container {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn:hover {
+            background: #764ba2;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .users-table {
+            width: 100%;
+            background: #1f1f1f;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .users-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .users-table th {
+            background: #667eea;
+            padding: 15px;
+            text-align: left;
+        }
+
+        .users-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #333;
+        }
+
+        .users-table tr:hover {
+            background: #2a2a2a;
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .role-administrator {
+            background: #dc3545;
+        }
+
+        .role-manager {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .role-user {
+            background: #28a745;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: #242526;
+            width: 500px;
+            border-radius: 10px;
+            padding: 30px;
+            color: white;
+        }
+
+        .modal-content h2 {
+            margin-top: 0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #444;
+            background: #333;
+            color: white;
+        }
+
+        .tags-input {
+            margin-top: 5px;
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .close-btn {
+            float: right;
+            font-size: 28px;
+            cursor: pointer;
+        }
+    </style>
+    <script src="https://kit.fontawesome.com/2616052655.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="header-row">
+            <h1>👥 User Management</h1>
+            <div>
+                <button class="btn" onclick="openCreateUserModal()">
+                    <i class="fa-solid fa-user-plus"></i> Create User
+                </button>
+                <a href="/admin" class="btn">Back to Dashboard</a>
+            </div>
+        </div>
+
+        <div class="users-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>User Tag</th>
+                        <th>Role</th>
+                        <th>Managed Tags</th>
+                        <th>Created</th>
+                        <th>Last Login</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each users}}
+                    <tr>
+                        <td>{{username}}</td>
+                        <td>{{userTag}}</td>
+                        <td>
+                            <span class="role-badge role-{{role}}">{{role}}</span>
+                        </td>
+                        <td>
+                            {{#if managedTags.length}}
+                                {{#each managedTags}}
+                                    <span class="role-badge" style="background: #17a2b8;">{{this}}</span>
+                                {{/each}}
+                            {{else}}
+                                -
+                            {{/if}}
+                        </td>
+                        <td>{{formatDate createdAt "YYYY-MM-DD"}}</td>
+                        <td>
+                            {{#if lastLogin}}
+                                {{formatDate lastLogin "YYYY-MM-DD HH:mm"}}
+                            {{else}}
+                                Never
+                            {{/if}}
+                        </td>
+                        <td>
+                            <div class="actions">
+                                <button class="btn" onclick="openEditRoleModal('{{_id}}', '{{username}}', '{{role}}', '{{managedTags}}')">
+                                    <i class="fa-solid fa-user-tag"></i> Role
+                                </button>
+                                <button class="btn btn-danger" onclick="deleteUser('{{_id}}', '{{username}}')">
+                                    <i class="fa-solid fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {{else}}
+                    <tr>
+                        <td colspan="7" style="text-align: center;">No users found</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Create User Modal -->
+    <div id="createUserModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeCreateUserModal()">&times;</span>
+            <h2>Create New User</h2>
+            <form id="createUserForm">
+                <div class="form-group">
+                    <label>Username:</label>
+                    <input type="text" id="create-username" required>
+                </div>
+                <div class="form-group">
+                    <label>Password:</label>
+                    <input type="password" id="create-password" required>
+                </div>
+                <div class="form-group">
+                    <label>Role:</label>
+                    <select id="create-role" onchange="toggleManagedTags('create')">
+                        <option value="user">User</option>
+                        <option value="manager">Manager</option>
+                        <option value="administrator">Administrator</option>
+                    </select>
+                </div>
+                <div class="form-group" id="create-tags-group" style="display: none;">
+                    <label>Managed Tags (comma-separated):</label>
+                    <input type="text" id="create-tags" placeholder="e.g., Food, Travel, Gaming">
+                    <div class="tags-input">For managers only. Leave blank if not applicable.</div>
+                </div>
+                <button type="submit" class="btn">Create User</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Role Modal -->
+    <div id="editRoleModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeEditRoleModal()">&times;</span>
+            <h2>Edit User Role</h2>
+            <form id="editRoleForm">
+                <input type="hidden" id="edit-user-id">
+                <div class="form-group">
+                    <label>Username:</label>
+                    <input type="text" id="edit-username" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Role:</label>
+                    <select id="edit-role" onchange="toggleManagedTags('edit')">
+                        <option value="user">User</option>
+                        <option value="manager">Manager</option>
+                        <option value="administrator">Administrator</option>
+                    </select>
+                </div>
+                <div class="form-group" id="edit-tags-group" style="display: none;">
+                    <label>Managed Tags (comma-separated):</label>
+                    <input type="text" id="edit-tags" placeholder="e.g., Food, Travel, Gaming">
+                    <div class="tags-input">For managers only.</div>
+                </div>
+                <button type="submit" class="btn">Update Role</button>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 TikTalk Archers</p>
+    </footer>
+
+    <script>
+        function openCreateUserModal() {
+            document.getElementById('createUserModal').style.display = 'flex';
+        }
+
+        function closeCreateUserModal() {
+            document.getElementById('createUserModal').style.display = 'none';
+            document.getElementById('createUserForm').reset();
+        }
+
+        function openEditRoleModal(userId, username, role, managedTags) {
+            document.getElementById('edit-user-id').value = userId;
+            document.getElementById('edit-username').value = username;
+            document.getElementById('edit-role').value = role;
+            document.getElementById('edit-tags').value = managedTags;
+            
+            toggleManagedTags('edit');
+            document.getElementById('editRoleModal').style.display = 'flex';
+        }
+
+        function closeEditRoleModal() {
+            document.getElementById('editRoleModal').style.display = 'none';
+        }
+
+        function toggleManagedTags(prefix) {
+            const role = document.getElementById(`${prefix}-role`).value;
+            const tagsGroup = document.getElementById(`${prefix}-tags-group`);
+            
+            if (role === 'manager') {
+                tagsGroup.style.display = 'block';
+            } else {
+                tagsGroup.style.display = 'none';
+            }
+        }
+
+        document.getElementById('createUserForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('create-username').value;
+            const password = document.getElementById('create-password').value;
+            const role = document.getElementById('create-role').value;
+            const managedTags = document.getElementById('create-tags').value;
+
+            try {
+                const response = await fetch('/admin/users/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, role, managedTags })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    alert('User created successfully!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to create user');
+            }
+        });
+
+        document.getElementById('editRoleForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const userId = document.getElementById('edit-user-id').value;
+            const role = document.getElementById('edit-role').value;
+            const managedTags = document.getElementById('edit-tags').value;
+
+            try {
+                const response = await fetch(`/admin/users/${userId}/role`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ role, managedTags })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    alert('User role updated successfully!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to update user role');
+            }
+        });
+
+        async function deleteUser(userId, username) {
+            if (!confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/admin/users/${userId}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    alert('User deleted successfully!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to delete user');
+            }
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const createModal = document.getElementById('createUserModal');
+            const editModal = document.getElementById('editRoleModal');
+            
+            if (event.target === createModal) {
+                closeCreateUserModal();
+            }
+            if (event.target === editModal) {
+                closeEditRoleModal();
+            }
+        }
+    </script>
+</body>
+</html>
