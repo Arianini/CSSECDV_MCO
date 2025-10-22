@@ -154,18 +154,24 @@ async function logActivity(userId, action, targetType = '', targetId = '', detai
 }
 
 // Middleware to attach user info to all requests
-async function attachUserInfo(req, res, next) {
-    if (req.session.userId) {
+const attachUserInfo = async (req, res, next) => {
+    if (req.session && req.session.userId) {
         try {
             const user = await User.findById(req.session.userId).select('-password');
             req.user = user;
             res.locals.currentUser = user;
+            
+            // Add switch status to locals
+            if (req.session.isSwitched) {
+                res.locals.isSwitched = true;
+                res.locals.originalAdminId = req.session.originalAdminId;
+            }
         } catch (err) {
-            console.error('Error attaching user info:', err);
+            console.error('Error fetching user:', err);
         }
     }
     next();
-}
+};
 
 // Get client IP address
 function getClientIp(req) {

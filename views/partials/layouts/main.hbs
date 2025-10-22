@@ -20,9 +20,13 @@
         </div>
         <div class="icons">
             {{#if currentUser}}
-                <button class="icon-btn" id="create-post-btn" title="Create Post">
-                    <i class="fa-solid fa-plus fa-2x"></i>
-                </button>
+                <!-- Create Post - Only for regular users and managers, NOT admins -->
+                {{#unless (eq currentUser.role 'administrator')}}
+                    <button class="icon-btn" id="create-post-btn" title="Create Post">
+                        <i class="fa-solid fa-plus fa-2x"></i>
+                    </button>
+                {{/unless}}
+                
                 <button class="icon-btn" id="profile-btn" title="Profile">
                     <i class="fa-solid fa-user fa-2x"></i>
                 </button>
@@ -52,7 +56,7 @@
         </div>
         
         {{#if currentUser}}
-        <div id="menu-dropdown" class="menu-dropdown" style="display: none;">
+        <div id="menu-dropdown" class="menu-dropdown">
             <ul>
                 <li style="padding: 15px; border-bottom: 2px solid #667eea;">
                     <strong style="font-size: 16px;">{{currentUser.username}}</strong><br>
@@ -66,28 +70,41 @@
                         {{/if}}
                     </span>
                 </li>
-                <li style="border-top: 1px solid #333; margin-top: 5px; padding-top: 10px;">
-                    <a href="/profile"><i class="fa-solid fa-user"></i> My Profile</a>
-                </li>
                 
+                <!-- Admin-only menu items -->
                 {{#if (eq currentUser.role 'administrator')}}
-                    <li style="background: rgba(220, 53, 69, 0.1);">
+                    <li style="border-top: 1px solid #333; margin-top: 5px; padding-top: 10px; background: rgba(220, 53, 69, 0.1);">
                         <a href="/admin" style="color: #dc3545; font-weight: bold;">
                             <i class="fa-solid fa-shield-halved"></i> Admin Dashboard
                         </a>
                     </li>
                     <li><a href="/admin/users"><i class="fa-solid fa-users"></i> Manage Users</a></li>
                     <li><a href="/admin/logs"><i class="fa-solid fa-list"></i> Audit Logs</a></li>
+                    <li style="border-bottom: 1px solid #333; padding-bottom: 10px;">
+                        <a href="/home"><i class="fa-solid fa-home"></i> View Public Feed</a>
+                    </li>
                 {{/if}}
                 
+                <!-- Manager menu items -->
                 {{#if (eq currentUser.role 'manager')}}
-                    <li style="background: rgba(255, 193, 7, 0.1);">
+                    <li style="border-top: 1px solid #333; margin-top: 5px; padding-top: 10px; background: rgba(255, 193, 7, 0.1);">
                         <a href="/manager" style="color: #ffc107; font-weight: bold;">
                             <i class="fa-solid fa-user-shield"></i> Manager Dashboard
                         </a>
                     </li>
+                    <li style="border-bottom: 1px solid #333; padding-bottom: 10px;">
+                        <a href="/profile"><i class="fa-solid fa-user"></i> My Profile</a>
+                    </li>
                 {{/if}}
                 
+                <!-- Regular user menu items -->
+                {{#if (eq currentUser.role 'user')}}
+                    <li style="border-top: 1px solid #333; margin-top: 5px; padding-top: 10px;">
+                        <a href="/profile"><i class="fa-solid fa-user"></i> My Profile</a>
+                    </li>
+                {{/if}}
+                
+                <!-- Common menu items for all roles -->
                 <li><a href="/settings"><i class="fa-solid fa-gear"></i> Settings</a></li>
                 <li><a href="/change-password"><i class="fa-solid fa-key"></i> Change Password</a></li>
                 <li><a href="/about"><i class="fa-solid fa-info-circle"></i> About</a></li>
@@ -120,72 +137,7 @@
         <p>&copy; 2025 TikTalk Archers</p>
     </footer>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            console.log("DOM Loaded, initializing menu...");
-            
-            // Menu dropdown
-            const menuBtn = document.getElementById("menu-btn");
-            const menuDropdown = document.getElementById("menu-dropdown");
-
-            console.log("Menu Button:", menuBtn);
-            console.log("Menu Dropdown:", menuDropdown);
-
-            if (menuBtn && menuDropdown) {
-                menuBtn.addEventListener("click", function (event) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    
-                    console.log("Menu button clicked!");
-                    console.log("Current display:", menuDropdown.style.display);
-                    
-                    if (menuDropdown.style.display === "none" || menuDropdown.style.display === "") {
-                        menuDropdown.style.display = "block";
-                        console.log("Menu opened");
-                    } else {
-                        menuDropdown.style.display = "none";
-                        console.log("Menu closed");
-                    }
-                });
-
-                // Close menu when clicking outside
-                document.addEventListener("click", function (event) {
-                    if (!menuDropdown.contains(event.target) && event.target !== menuBtn && !menuBtn.contains(event.target)) {
-                        menuDropdown.style.display = "none";
-                    }
-                });
-            } else {
-                console.error("Menu elements not found!");
-            }
-
-            // Profile button
-            const profileBtn = document.getElementById("profile-btn");
-            if (profileBtn) {
-                profileBtn.addEventListener("click", function() {
-                    window.location.href = "/profile";
-                });
-            }
-
-            // Search functionality
-            const searchInput = document.querySelector("#search-input");
-            const searchButton = document.querySelector("#search-btn");
-
-            if (searchButton && searchInput) {
-                searchButton.addEventListener("click", () => {
-                    const query = searchInput.value.trim();
-                    if (!query) return;
-                    window.location.href = `/search?q=${encodeURIComponent(query)}`;
-                });
-
-                searchInput.addEventListener("keypress", (e) => {
-                    if (e.key === "Enter") {
-                        const query = searchInput.value.trim();
-                        if (!query) return;
-                        window.location.href = `/search?q=${encodeURIComponent(query)}`;
-                    }
-                });
-            }
-        });
-    </script>
+    <!-- Include centralized menu and header functionality -->
+    <script src="/js/menu.js"></script>
 </body>
 </html>

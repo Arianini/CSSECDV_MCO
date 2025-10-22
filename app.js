@@ -259,6 +259,15 @@ server.get('/logout', (req, res) => {
 // Home feed
 server.get('/home', isAuthenticated, async (req, res) => {
     try {
+        const userId = req.session.userId;
+        const user = await User.findById(userId);
+
+        // If user is administrator, redirect to admin dashboard
+        if (user.role === 'administrator') {
+            return res.redirect('/admin');
+        }
+
+        // For regular users and managers, show the normal feed
         const posts = await Post.find()
             .populate('user')
             .populate({
@@ -266,9 +275,6 @@ server.get('/home', isAuthenticated, async (req, res) => {
                 select: 'username profilePic'
             })
             .sort({ createdAt: -1 });
-
-        const userId = req.session.userId;
-        const user = await User.findById(userId).populate('likes dislikes');
 
         const postsWithOwnership = posts.map(post => {
             const postObj = post.toObject();
@@ -293,6 +299,29 @@ server.get('/home', isAuthenticated, async (req, res) => {
         res.render('index', {
             posts: postsWithOwnership,
             userProfile: user
+        });
+    } catch (err) {
+        console.error("Error fetching posts:", err);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+server.get('/admin/view-feed', isAdministrator, async (req, res) => {
+    try {
+        const posts = await Post.find()
+            .populate('user')
+            .populate({
+                path: 'comments.user',
+                select: 'username profilePic'
+            })
+            .sort({ createdAt: -1 });
+
+        const user = await User.findById(req.session.userId);
+
+        res.render('admin/view-feed', {
+            posts: posts,
+            userProfile: user,
+            readOnly: true // Flag to disable interactions in the view
         });
     } catch (err) {
         console.error("Error fetching posts:", err);
@@ -1383,6 +1412,65 @@ server.get('/admin/logs/export', isAdministrator, async (req, res) => {
     } catch (err) {
         console.error("Error exporting logs:", err);
         res.status(500).send("Internal Server Error");
+    }
+});
+
+server.post('/admin/switch-user/:userId', isAdministrator, async (req, res) => {
+    const { userId } = req.params;
+    
+    try {
+        const targetUser = await User.findById(userId);
+        
+        if (!targetUser) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        // Store original admin ID before switching
+        req.session.originalAdminId = req.session.userId;
+        req.session.userId = targetUser._id;
+        req.session.isSwitched = true;
+
+        await logActivity(req.session.originalAdminId, 'SWITCH_USER', 'USER', userId, 
+                         `Admin switched to user: ${targetUser.username}`, getClientIp(req));
+
+        res.json({ 
+            success: true, 
+            message: `Switched to ${targetUser.username}`,
+            redirectTo: '/home'
+        });
+    } catch (err) {
+        console.error("Error switching user:", err);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+// Switch back to admin account
+server.post('/admin/switch-back', isAuthenticated, async (req, res) => {
+    try {
+        if (!req.session.isSwitched || !req.session.originalAdminId) {
+            return res.status(400).json({ error: "Not in switched user mode" });
+        }
+
+        const originalAdminId = req.session.originalAdminId;
+        const currentUserId = req.session.userId;
+
+        req.session.userId = originalAdminId;
+        delete req.session.originalAdminId;
+        delete req.session.isSwitched;
+
+        const user = await User.findById(currentUserId);
+        
+        await logActivity(originalAdminId, 'SWITCH_BACK', 'USER', currentUserId, 
+                         `Admin switched back from user: ${user.username}`, getClientIp(req));
+
+        res.json({ 
+            success: true, 
+            message: "Switched back to admin account",
+            redirectTo: '/admin'
+        });
+    } catch (err) {
+        console.error("Error switching back:", err);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 });
 

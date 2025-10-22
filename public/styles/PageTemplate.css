@@ -106,70 +106,21 @@ footer {
     bottom: 0;
     width: 100%;
 }
+/* Add this to your PageTemplate.css */
 
-/* Style the dropdown menu */
-.menu-dropdown {
-    display: none; /* Hidden by default */
-    position: absolute;
-    right: 20px;
-    top: 80px;
-    background: #1f1f1f;
-    border: 1px solid #333;
-    border-radius: 8px;
-    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.4);
-    width: 250px;
-    z-index: 1000;
-    animation: slideDown 0.3s ease;
+/* Make menu dropdown visible when it has the 'show' class */
+.menu-dropdown.show {
+    display: block !important;
 }
 
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.menu-dropdown ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-
-.menu-dropdown ul li {
-    padding: 12px 20px;
-    text-align: left;
-    border-bottom: 1px solid #333;
-    transition: background 0.2s;
-}
-
-.menu-dropdown ul li:last-child {
-    border-bottom: none;
-}
-
-.menu-dropdown ul li a {
-    text-decoration: none;
-    color: white;
-    display: block;
-    font-size: 15px;
-    transition: color 0.2s;
-}
-
-.menu-dropdown ul li:hover {
-    background: #2a2a2a;
-}
-
+/* Ensure proper stacking */
 header {
     position: relative;
     z-index: 100;
 }
 
-/* Style the dropdown menu */
 .menu-dropdown {
-    display: none; /* Hidden by default */
+    display: none;
     position: absolute;
     right: 20px;
     top: 80px;
@@ -224,6 +175,9 @@ header {
     display: inline-block;
 }
 
+.menu-dropdown ul li:hover {
+    background: #2a2a2a;
+}
 
 .menu-dropdown ul li a:hover {
     color: #667eea;
