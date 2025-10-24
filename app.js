@@ -402,6 +402,12 @@ server.get('/profile', isAuthenticated, async (req, res) => {
             return res.redirect('/login');
         }
 
+        // ✅ If admin, redirect to admin dashboard
+        if (user.role === 'administrator') {
+            return res.redirect('/admin');
+        }
+
+        // Regular users and managers see their profile
         res.render('profile', { userProfile: user });
     } catch (err) {
         console.error(err);
@@ -1230,6 +1236,7 @@ server.get('/admin/users', isAdministrator, async (req, res) => {
         res.render('admin/users', {
             userProfile: req.user,
             users
+            // Remove: layout: false  ← Don't set this
         });
     } catch (err) {
         console.error("Error loading users:", err);
