@@ -10,6 +10,17 @@
     <script src="https://kit.fontawesome.com/2616052655.js" crossorigin="anonymous"></script>
 </head>
 <body>
+    <!-- Admin Switch Banner - Shows when admin is testing as another user -->
+    {{#if isSwitched}}
+    <div class="admin-switch-banner">
+        <i class="fa-solid fa-triangle-exclamation"></i> 
+        ADMIN MODE: Testing as {{currentUser.username}} 
+        <button onclick="switchBackToAdmin()" class="switch-back-btn">
+            <i class="fa-solid fa-arrow-left"></i> Switch Back to Admin
+        </button>
+    </div>
+    {{/if}}
+
     <header>
         <div class="logo">
             <img src="/styles/images/logo.jpg" alt="Logo">
@@ -20,16 +31,19 @@
         </div>
         <div class="icons">
             {{#if currentUser}}
-                <!-- Create Post - Only for regular users and managers, NOT admins -->
+                <!-- Create Post - Only for users and managers, NOT admins -->
                 {{#unless (eq currentUser.role 'administrator')}}
                     <button class="icon-btn" id="create-post-btn" title="Create Post">
                         <i class="fa-solid fa-plus fa-2x"></i>
                     </button>
                 {{/unless}}
                 
-                <button class="icon-btn" id="profile-btn" title="Profile">
-                    <i class="fa-solid fa-user fa-2x"></i>
-                </button>
+                <!-- Profile Icon - Only for users and managers, NOT admins -->
+                {{#unless (eq currentUser.role 'administrator')}}
+                    <button class="icon-btn" id="profile-btn" title="Profile">
+                        <i class="fa-solid fa-user fa-2x"></i>
+                    </button>
+                {{/unless}}
                 
                 <!-- ADMIN ICON - Only visible to administrators -->
                 {{#if (eq currentUser.role 'administrator')}}
@@ -81,7 +95,7 @@
                     <li><a href="/admin/users"><i class="fa-solid fa-users"></i> Manage Users</a></li>
                     <li><a href="/admin/logs"><i class="fa-solid fa-list"></i> Audit Logs</a></li>
                     <li style="border-bottom: 1px solid #333; padding-bottom: 10px;">
-                        <a href="/home"><i class="fa-solid fa-home"></i> View Public Feed</a>
+                        <a href="/home"><i class="fa-solid fa-eye"></i> View Public Feed</a>
                     </li>
                 {{/if}}
                 
@@ -120,11 +134,16 @@
 
     <nav>
         <ul>
-            <li><a href="{{#if currentUser}}/home{{else}}/{{/if}}">Home</a></li>
-            {{#unless currentUser}}
+            {{#if currentUser}}
+                <!-- Only show Home for non-admins -->
+                {{#unless (eq currentUser.role 'administrator')}}
+                    <li><a href="/home">Home</a></li>
+                {{/unless}}
+            {{else}}
+                <li><a href="/">Home</a></li>
                 <li><a href="/login">Login</a></li>
                 <li><a href="/register">Register</a></li>
-            {{/unless}}
+            {{/if}}
             <li><a href="/about">About</a></li>
         </ul>
     </nav>
@@ -137,7 +156,68 @@
         <p>&copy; 2025 TikTalk Archers</p>
     </footer>
 
+    <style>
+        /* Admin Switch Banner Styles */
+        .admin-switch-banner {
+            background: #dc3545;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { background: #dc3545; }
+            50% { background: #c82333; }
+        }
+
+        .switch-back-btn {
+            background: white;
+            color: #dc3545;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 5px;
+            margin-left: 15px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .switch-back-btn:hover {
+            background: #f8f9fa;
+            transform: translateY(-1px);
+        }
+    </style>
+
     <!-- Include centralized menu and header functionality -->
     <script src="/js/menu.js"></script>
+
+    <!-- Admin Switch Back Functionality -->
+    {{#if isSwitched}}
+    <script>
+        async function switchBackToAdmin() {
+            try {
+                const response = await fetch('/admin/switch-back', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    window.location.href = data.redirectTo;
+                } else {
+                    console.error('Failed to switch back:', data.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+    </script>
+    {{/if}}
 </body>
 </html>

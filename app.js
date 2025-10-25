@@ -25,6 +25,18 @@ const {
     getClientIp
 } = require('./middleware/auth');
 
+const ALLOWED_TAGS = [
+    'Food',
+    'Coffee', 
+    'Baking',
+    'Travel',
+    'Gaming',
+    'Technology',
+    'Sports',
+    'Music',
+    'Art',
+    'General'
+];
 const server = express();
 
 // Multer configuration for file uploads
@@ -609,6 +621,15 @@ server.post('/create-post', isAuthenticated, upload.single("image"), async (req,
     const caption = req.body.caption?.trim() || "";
     const postTag = req.body.postTag?.trim() || ""; 
     const imageUrl = req.file ? `/uploads/${req.file.filename}` : "";
+
+    // Validate tag
+    if (!postTag) {
+        return res.status(400).json({ error: "Please select a category" });
+    }
+    
+    if (!ALLOWED_TAGS.includes(postTag)) {
+        return res.status(400).json({ error: "Invalid category selected" });
+    }
 
     if (!caption && !req.file) {
         return res.status(400).json({ error: "Post must contain either a caption or an image." });
