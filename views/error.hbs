@@ -45,6 +45,7 @@
             font-size: 1.2rem;
             margin-bottom: 30px;
             opacity: 0.9;
+            line-height: 1.6;
         }
 
         .btn {
@@ -73,9 +74,9 @@
         <div class="error-icon">
             <i class="fa-solid fa-triangle-exclamation"></i>
         </div>
-        <h1>{{message}}</h1>
-        <p>{{detail}}</p>
-        <a href="/" class="btn">Go Back Home</a>
+        <h1>{{#if message}}{{message}}{{else}}Internal Server Error{{/if}}</h1>
+        <p>{{#if detail}}{{detail}}{{else}}Something went wrong on our end. Please try again later.{{/if}}</p>
+        <a href="/home" class="btn">Go Back Home</a>
     </div>
 </body>
 </html>

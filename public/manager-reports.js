@@ -2,8 +2,58 @@
 // MANAGER REPORTS DASHBOARD JAVASCRIPT
 // ============================================
 
-// Handle report action
-function handleReport(reportId, action) {
+// Global variables for modal state
+let currentReportId = null;
+let currentAction = null;
+
+// View full post in modal
+function viewFullPost(postId, username, caption, imageUrl, postTag, createdAt) {
+    const modal = document.getElementById('postViewModal');
+    const modalImage = document.getElementById('modalPostImage');
+    const modalImageSection = document.getElementById('modalImageSection');
+    const modalUsername = document.getElementById('modalUsername');
+    const modalCaption = document.getElementById('modalCaption');
+    const modalTag = document.getElementById('modalTag');
+    const modalTimestamp = document.getElementById('modalTimestamp');
+    
+    // Set content
+    modalUsername.textContent = username;
+    modalCaption.textContent = caption;
+    modalTimestamp.textContent = createdAt;
+    
+    // Handle image
+    if (imageUrl && imageUrl !== 'undefined') {
+        modalImage.src = imageUrl;
+        modalImageSection.style.display = 'block';
+    } else {
+        modalImageSection.style.display = 'none';
+    }
+    
+    // Handle tag
+    if (postTag && postTag !== 'undefined') {
+        modalTag.innerHTML = `<span class="tag-badge">${postTag}</span>`;
+        modalTag.style.display = 'block';
+    } else {
+        modalTag.style.display = 'none';
+    }
+    
+    // Show modal
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+// Close post modal
+function closePostModal() {
+    const modal = document.getElementById('postViewModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+// Show custom action modal
+function showActionModal(reportId, action) {
+    currentReportId = reportId;
+    currentAction = action;
+    
     const actionMessages = {
         'hide_post': 'Hide this post',
         'delete_post': 'Delete this post',
@@ -12,18 +62,62 @@ function handleReport(reportId, action) {
         'dismiss': 'Dismiss this report'
     };
     
-    const notes = prompt(`Enter notes for action: ${actionMessages[action]}`);
-    if (notes === null) return; // User cancelled
+    const modal = document.createElement('div');
+    modal.className = 'custom-modal';
+    modal.innerHTML = `
+        <div class="custom-modal-overlay" onclick="closeActionModal()"></div>
+        <div class="custom-modal-content">
+            <h3>Confirm Action</h3>
+            <p>Action: <strong>${actionMessages[action]}</strong></p>
+            <label for="actionNotes">Enter notes for this action:</label>
+            <textarea id="actionNotes" rows="4" placeholder="Provide detailed notes about this action..." required></textarea>
+            <div class="custom-modal-buttons">
+                <button class="btn-cancel" onclick="closeActionModal()">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button class="btn-confirm" onclick="confirmAction()">
+                    <i class="fas fa-check"></i> Confirm
+                </button>
+            </div>
+        </div>
+    `;
     
-    if (!notes.trim()) {
-        alert('Please provide notes for this action');
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
+    
+    // Focus on textarea
+    setTimeout(() => {
+        document.getElementById('actionNotes').focus();
+    }, 100);
+}
+
+// Close action modal
+function closeActionModal() {
+    const modal = document.querySelector('.custom-modal');
+    if (modal) {
+        modal.remove();
+        document.body.style.overflow = 'auto';
+    }
+    currentReportId = null;
+    currentAction = null;
+}
+
+// Confirm action
+function confirmAction() {
+    const notes = document.getElementById('actionNotes').value.trim();
+    
+    if (!notes) {
+        showNotification('Error', 'Please provide notes for this action', 'error');
         return;
     }
     
-    // Show loading state
-    const originalText = event.target.innerHTML;
-    event.target.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-    event.target.disabled = true;
+    closeActionModal();
+    executeAction(currentReportId, currentAction, notes);
+}
+
+// Execute the action
+function executeAction(reportId, action, notes) {
+    showNotification('Processing...', 'Please wait', 'info');
     
     fetch(`/manager/reports/${reportId}/handle`, {
         method: 'POST',
@@ -37,32 +131,69 @@ function handleReport(reportId, action) {
             setTimeout(() => location.reload(), 1500);
         } else {
             showNotification('Error', data.error || 'Failed to handle report', 'error');
-            event.target.innerHTML = originalText;
-            event.target.disabled = false;
         }
     })
     .catch(error => {
         console.error('Error:', error);
         showNotification('Error', 'Failed to handle report', 'error');
-        event.target.innerHTML = originalText;
-        event.target.disabled = false;
     });
+}
+
+// Handle report action (wrapper function)
+function handleReport(reportId, action) {
+    showActionModal(reportId, action);
 }
 
 // Escalate report to admin
 function escalateReport(reportId) {
-    const reason = prompt('Why are you escalating this report to admin?');
-    if (reason === null) return; // User cancelled
+    const modal = document.createElement('div');
+    modal.className = 'custom-modal';
+    modal.innerHTML = `
+        <div class="custom-modal-overlay" onclick="closeEscalateModal()"></div>
+        <div class="custom-modal-content">
+            <h3>Escalate to Administrator</h3>
+            <p>This report will be forwarded to an administrator for review.</p>
+            <label for="escalateReason">Reason for escalation:</label>
+            <textarea id="escalateReason" rows="4" placeholder="Explain why this requires admin attention..." required></textarea>
+            <div class="custom-modal-buttons">
+                <button class="btn-cancel" onclick="closeEscalateModal()">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button class="btn-confirm" onclick="confirmEscalate('${reportId}')">
+                    <i class="fas fa-arrow-up"></i> Escalate
+                </button>
+            </div>
+        </div>
+    `;
     
-    if (!reason.trim()) {
-        alert('Please provide a reason for escalation');
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
+    
+    setTimeout(() => {
+        document.getElementById('escalateReason').focus();
+    }, 100);
+}
+
+// Close escalate modal
+function closeEscalateModal() {
+    const modal = document.querySelector('.custom-modal');
+    if (modal) {
+        modal.remove();
+        document.body.style.overflow = 'auto';
+    }
+}
+
+// Confirm escalation
+function confirmEscalate(reportId) {
+    const reason = document.getElementById('escalateReason').value.trim();
+    
+    if (!reason) {
+        showNotification('Error', 'Please provide a reason for escalation', 'error');
         return;
     }
     
-    // Show loading state
-    const originalText = event.target.innerHTML;
-    event.target.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Escalating...';
-    event.target.disabled = true;
+    closeEscalateModal();
+    showNotification('Processing...', 'Escalating report', 'info');
     
     fetch(`/manager/reports/${reportId}/escalate`, {
         method: 'POST',
@@ -76,15 +207,11 @@ function escalateReport(reportId) {
             setTimeout(() => location.reload(), 1500);
         } else {
             showNotification('Error', data.error || 'Failed to escalate report', 'error');
-            event.target.innerHTML = originalText;
-            event.target.disabled = false;
         }
     })
     .catch(error => {
         console.error('Error:', error);
         showNotification('Error', 'Failed to escalate report', 'error');
-        event.target.innerHTML = originalText;
-        event.target.disabled = false;
     });
 }
 
@@ -133,7 +260,7 @@ function showNotification(title, message, type) {
     notification.innerHTML = `
         <div class="notification-header">
             <strong>${title}</strong>
-            <button onclick="this.parentElement.parentElement.remove()">×</button>
+            <button onclick="this.parentElement.parentElement.remove()">Ã—</button>
         </div>
         <div class="notification-body">${message}</div>
     `;

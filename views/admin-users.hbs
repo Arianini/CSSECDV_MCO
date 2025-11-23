@@ -4,18 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Management</title>
-    <link rel="stylesheet" href="/PageTemplate.css">
+    <link rel="stylesheet" href="/styles/PageTemplate.css">
     <link rel="stylesheet" href="/admin-users.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    {{> menu}}
-    
+    <!-- Navigation Bar -->
     <div class="admin-container">
         <div class="admin-header">
             <h1><i class="fas fa-users-cog"></i> User Management</h1>
-            <button class="btn btn-primary" onclick="showCreateManagerModal()">
-                <i class="fas fa-user-plus"></i> Create Manager Account
+            <button class="btn btn-primary" onclick="showCreateUserModal()">
+                <i class="fas fa-user-plus"></i> Create Account
             </button>
         </div>
 
@@ -66,7 +65,10 @@
                                         <i class="fas fa-unlock"></i> Unban
                                     </button>
                                 {{else}}
-                                    <button class="btn-small btn-warning" onclick="banUser('{{_id}}', '{{username}}')">
+                                    <button class="btn-small btn-warning" onclick="showRestrictModal('{{_id}}', '{{username}}')">
+                                        <i class="fas fa-clock"></i> Restrict
+                                    </button>
+                                    <button class="btn-small btn-danger" onclick="showBanModal('{{_id}}', '{{username}}')">
                                         <i class="fas fa-ban"></i> Ban
                                     </button>
                                 {{/if}}
@@ -76,7 +78,7 @@
                                 </button>
                                 
                                 {{#unless (eq role 'administrator')}}
-                                    <button class="btn-small btn-danger" onclick="deleteUser('{{_id}}', '{{username}}')">
+                                    <button class="btn-small btn-danger" onclick="showDeleteModal('{{_id}}', '{{username}}')">
                                         <i class="fas fa-trash"></i> Delete
                                     </button>
                                 {{/unless}}
@@ -89,54 +91,187 @@
         </div>
     </div>
 
-    <!-- Create Manager Modal -->
-    <div id="createManagerModal" class="modal">
+    <!-- Create User Modal -->
+    <div id="createUserModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2><i class="fas fa-user-plus"></i> Create Manager Account</h2>
-                <span class="close" onclick="closeCreateManagerModal()">&times;</span>
+                <h2><i class="fas fa-user-plus"></i> Create New Account</h2>
+                <span class="close" onclick="closeCreateUserModal()">&times;</span>
             </div>
-            <form id="createManagerForm" onsubmit="createManager(event)">
+            <form id="createUserForm" onsubmit="createUser(event)">
                 <div class="form-group">
-                    <label for="managerUsername">
+                    <label for="newUserRole">
+                        <i class="fas fa-shield-alt"></i> Account Type
+                    </label>
+                    <select id="newUserRole" required onchange="toggleManagedTagsField()">
+                        <option value="manager">Manager</option>
+                        <option value="administrator">Administrator</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="newUsername">
                         <i class="fas fa-user"></i> Username
                     </label>
-                    <input type="text" id="managerUsername" required 
+                    <input type="text" id="newUsername" required 
                            placeholder="Enter username" 
                            pattern="[a-zA-Z0-9_]{3,20}"
                            title="3-20 characters, letters, numbers, and underscores only">
                 </div>
                 
                 <div class="form-group">
-                    <label for="managerPassword">
+                    <label for="newPassword">
                         <i class="fas fa-lock"></i> Password
                     </label>
-                    <input type="password" id="managerPassword" required 
+                    <input type="password" id="newPassword" required 
                            placeholder="Enter password"
                            minlength="8">
                     <small>Must be at least 8 characters with uppercase, lowercase, number, and special character</small>
                 </div>
                 
                 <div class="form-group">
-                    <label for="managerUserTag">
+                    <label for="newUserTag">
                         <i class="fas fa-tag"></i> User Tag
                     </label>
-                    <input type="text" id="managerUserTag" required 
+                    <input type="text" id="newUserTag" required 
                            placeholder="u/username">
                 </div>
                 
-                <div class="form-group">
-                    <label for="managedTags">
+                <div class="form-group" id="managedTagsGroup">
+                    <label for="newManagedTags">
                         <i class="fas fa-tags"></i> Managed Tags (comma-separated)
                     </label>
-                    <input type="text" id="managedTags" 
+                    <input type="text" id="newManagedTags" 
                            placeholder="e.g., Food, Travel, Gaming">
                     <small>Optional: Tags this manager can moderate</small>
                 </div>
                 
                 <button type="submit" class="btn btn-primary btn-full">
-                    <i class="fas fa-user-plus"></i> Create Manager
+                    <i class="fas fa-user-plus"></i> Create Account
                 </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Ban User Modal -->
+    <div id="banModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-ban"></i> Permanently Ban User</h2>
+                <span class="close" onclick="closeBanModal()">&times;</span>
+            </div>
+            <form id="banForm" onsubmit="submitBan(event)">
+                <div class="form-group">
+                    <label>Username: <strong id="banUsername"></strong></label>
+                </div>
+                
+                <div class="form-group">
+                    <label for="banReason">
+                        <i class="fas fa-exclamation-circle"></i> Reason for Ban
+                    </label>
+                    <textarea id="banReason" required rows="3" 
+                              placeholder="Enter the reason for this permanent ban"></textarea>
+                </div>
+                
+                <div style="background: #ff5252; color: white; padding: 12px; border-radius: 4px; margin: 15px 0;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Warning:</strong> This will permanently ban the user from the platform.
+                </div>
+                
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeBanModal()">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-danger" style="flex: 1;">
+                        <i class="fas fa-ban"></i> Permanently Ban User
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Restrict User Modal -->
+    <div id="restrictModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-clock"></i> Temporarily Restrict User</h2>
+                <span class="close" onclick="closeRestrictModal()">&times;</span>
+            </div>
+            <form id="restrictForm" onsubmit="submitRestrict(event)">
+                <div class="form-group">
+                    <label>Username: <strong id="restrictUsername"></strong></label>
+                </div>
+                
+                <div class="form-group">
+                    <label for="restrictDuration">
+                        <i class="fas fa-hourglass-half"></i> Restriction Duration
+                    </label>
+                    <select id="restrictDuration" required>
+                        <option value="1">1 Hour</option>
+                        <option value="6">6 Hours</option>
+                        <option value="12">12 Hours</option>
+                        <option value="24">24 Hours (1 Day)</option>
+                        <option value="48" selected>48 Hours (2 Days)</option>
+                        <option value="72">72 Hours (3 Days)</option>
+                        <option value="168">1 Week</option>
+                        <option value="336">2 Weeks</option>
+                        <option value="720">30 Days</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="restrictReason">
+                        <i class="fas fa-exclamation-circle"></i> Reason for Restriction
+                    </label>
+                    <textarea id="restrictReason" required rows="3" 
+                              placeholder="Enter the reason for this temporary restriction"></textarea>
+                </div>
+                
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeRestrictModal()">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-warning" style="flex: 1;">
+                        <i class="fas fa-clock"></i> Restrict User
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete User Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-trash"></i> Delete User Account</h2>
+                <span class="close" onclick="closeDeleteModal()">&times;</span>
+            </div>
+            <form id="deleteForm" onsubmit="submitDelete(event)">
+                <div class="form-group">
+                    <label>Username: <strong id="deleteUsername"></strong></label>
+                </div>
+                
+                <div class="form-group">
+                    <label for="deleteConfirm">
+                        <i class="fas fa-keyboard"></i> Type the username to confirm deletion
+                    </label>
+                    <input type="text" id="deleteConfirm" required 
+                           placeholder="Type username here">
+                </div>
+                
+                <div style="background: #ff5252; color: white; padding: 12px; border-radius: 4px; margin: 15px 0;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Warning:</strong> This action cannot be undone!
+                </div>
+                
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-danger" style="flex: 1;">
+                        <i class="fas fa-trash"></i> Delete Account
+                    </button>
+                </div>
             </form>
         </div>
     </div>

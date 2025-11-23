@@ -56,7 +56,10 @@ const {
     isAuthenticatedEnhanced,
     isAdministratorEnhanced,
     isManagerEnhanced,
-    requirePermission
+    requirePermission,
+    // User Restrictions
+    checkUserRestriction,
+    requireNotRestricted
 } = require('./middleware/auth');
 
 const { 
@@ -119,6 +122,30 @@ server.engine('hbs', engine({
                 return a === b ? options.fn(this) : options.inverse(this);
             }
             return a === b;
+        },
+        
+        or: function () {
+            // Get all arguments except the last one (which is the options object)
+            const args = Array.prototype.slice.call(arguments, 0, -1);
+            const options = arguments[arguments.length - 1];
+            
+            // Check if any argument is truthy
+            for (let i = 0; i < args.length; i++) {
+                if (args[i]) {
+                    // If used as a subexpression (inside {{#if}}), just return true
+                    if (typeof options.fn !== 'function') {
+                        return true;
+                    }
+                    // If used as a block helper, render the block
+                    return options.fn(this);
+                }
+            }
+            
+            // If no arguments are truthy
+            if (typeof options.fn !== 'function') {
+                return false;
+            }
+            return options.inverse(this);
         },
         
         includes: function (array, value, options) {
@@ -267,6 +294,14 @@ server.post('/login', async (req, res) => {
             await logActivity(user._id, 'LOCKED_LOGIN_ATTEMPT', 'USER', user._id.toString(), 
                             `Login attempt on locked account`, getClientIp(req));
             return res.status(403).send(lockStatus.message);
+        }
+
+        // Check if user is banned/restricted
+        const restrictionStatus = await checkUserRestriction(user._id);
+        if (restrictionStatus.restricted) {
+            await logActivity(user._id, 'RESTRICTED_LOGIN_ATTEMPT', 'USER', user._id.toString(),
+                            `Login attempt by restricted user`, getClientIp(req));
+            return res.status(403).send(restrictionStatus.message);
         }
 
         // Check password
@@ -868,7 +903,7 @@ server.get('/profile/posts', isAuthenticated, async (req, res) => {
         });
 
     } catch (err) {
-        console.error('ÃƒÂ¢Ã‚ÂÃ…â€™ Error fetching user posts for profile:', err);
+        console.error('ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ Error fetching user posts for profile:', err);
         res.status(500).send('Internal Server Error');
     }
 });
@@ -891,7 +926,7 @@ server.get('/profile/likes', isAuthenticated, async (req, res) => {
 
         res.render('profile/likes', { layout: false, posts: likedPosts, userProfile: user });
     } catch (err) {
-        console.error("ÃƒÂ¢Ã‚ÂÃ…â€™ Error loading liked posts:", err);
+        console.error("ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ Error loading liked posts:", err);
         res.status(500).send("Internal Server Error");
     }
 });
@@ -914,7 +949,7 @@ server.get('/profile/dislikes', isAuthenticated, async (req, res) => {
 
         res.render('profile/dislikes', { layout: false, posts: dislikedPosts, userProfile: user });
     } catch (err) {
-        console.error("ÃƒÂ¢Ã‚ÂÃ…â€™ Error loading disliked posts:", err);
+        console.error("ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ Error loading disliked posts:", err);
         res.status(500).send("Internal Server Error");
     }
 });
@@ -963,7 +998,7 @@ server.post('/settings', isAuthenticated, async (req, res) => {
         if (!newUsername || newUsername.trim().length === 0) {
             await logActivity(req.session.userId, 'VALIDATION_FAILED', 'USERNAME_CHANGE', 
                             req.session.userId, 'Username change failed: Empty username', getClientIp(req));
-            return res.status(400).send("ÃƒÂ¢Ã…Â¡Ã‚Â  Username cannot be empty!");
+            return res.status(400).send("ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã‚Â¡Ãƒâ€šÃ‚Â  Username cannot be empty!");
         }
 
         // Case-insensitive check for existing username
@@ -974,12 +1009,12 @@ server.post('/settings', isAuthenticated, async (req, res) => {
             // 2.4.4 - Log input validation failure
             await logActivity(req.session.userId, 'VALIDATION_FAILED', 'USERNAME_CHANGE', 
                             req.session.userId, 'Username change failed: Username already exists', getClientIp(req));
-            return res.status(400).send("ÃƒÂ¢Ã…Â¡Ã‚Â  Username already exists!");
+            return res.status(400).send("ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã‚Â¡Ãƒâ€šÃ‚Â  Username already exists!");
         }
 
         const user = await User.findById(req.session.userId);
         if (!user) {
-            return res.status(400).send("ÃƒÂ¢Ã‚ÂÃ…â€™ User not found!");
+            return res.status(400).send("ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ User not found!");
         }
 
         const oldUsername = user.username;
@@ -1078,7 +1113,7 @@ server.post('/change-password', isAuthenticated, async (req, res) => {
 // POST MANAGEMENT ROUTES
 // ============================================
 
-server.post('/create-post', isAuthenticated, upload.single("image"), async (req, res) => {
+server.post('/create-post', isAuthenticated, requireNotRestricted, upload.single("image"), async (req, res) => {
     const caption = req.body.caption?.trim() || "";
     const postTag = req.body.postTag?.trim() || ""; 
     const imageUrl = req.file ? `/uploads/${req.file.filename}` : "";
@@ -1127,7 +1162,7 @@ server.post('/create-post', isAuthenticated, upload.single("image"), async (req,
 
         res.json({ success: true, message: "Post created successfully!" });
     } catch (err) {
-        console.error("ÃƒÂ°Ã…Â¸Ã…Â¡Ã‚Â¨ Error creating post:", err);
+        console.error("ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã‚Â¡Ãƒâ€šÃ‚Â¨ Error creating post:", err);
         res.status(500).json({ error: "Internal Server Error" });
     }
 });
@@ -1206,7 +1241,7 @@ server.delete('/delete-post/:postId', isAuthenticated, async (req, res) => {
 // LIKE/DISLIKE ROUTES
 // ============================================
 
-server.post('/like/:postId', isAuthenticated, async (req, res) => {
+server.post('/like/:postId', isAuthenticated, requireNotRestricted, async (req, res) => {
     try {
         const user = await User.findById(req.session.userId);
         const post = await Post.findById(req.params.postId);
@@ -1245,7 +1280,7 @@ server.post('/like/:postId', isAuthenticated, async (req, res) => {
     }
 });
 
-server.post('/dislike/:postId', isAuthenticated, async (req, res) => {
+server.post('/dislike/:postId', isAuthenticated, requireNotRestricted, async (req, res) => {
     try {
         const user = await User.findById(req.session.userId);
         const post = await Post.findById(req.params.postId);
@@ -1288,7 +1323,7 @@ server.post('/dislike/:postId', isAuthenticated, async (req, res) => {
 // COMMENT ROUTES
 // ============================================
 
-server.post('/add-comment/:postId', isAuthenticated, async (req, res) => {
+server.post('/add-comment/:postId', isAuthenticated, requireNotRestricted, async (req, res) => {
     try {
         const postId = req.params.postId;
         const { commentText } = req.body;

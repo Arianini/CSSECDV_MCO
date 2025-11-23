@@ -1,4 +1,5 @@
 const { User, ActivityLog } = require('../database');
+const { UserRestriction } = require('../moderation-schemas');
 const bcrypt = require('bcrypt');
 
 // ============================================
@@ -714,6 +715,87 @@ function getClientIp(req) {
 }
 
 // ============================================
+// USER RESTRICTION CHECKING
+// ============================================
+
+/**
+ * Check if a user has any active restrictions (bans/warnings)
+ * Returns: { restricted: boolean, restriction: object|null, message: string }
+ */
+async function checkUserRestriction(userId) {
+    try {
+        // Find active restrictions for this user
+        const activeRestriction = await UserRestriction.findOne({
+            user: userId,
+            isActive: true,
+            $or: [
+                { endDate: null }, // Permanent ban
+                { endDate: { $gte: new Date() } } // Temporary ban that hasn't expired
+            ]
+        }).sort({ startDate: -1 }); // Get most recent restriction
+        
+        if (!activeRestriction) {
+            return { restricted: false, restriction: null, message: null };
+        }
+        
+        // Check if it's a permanent ban
+        if (activeRestriction.restrictionType === 'permanent_ban') {
+            return {
+                restricted: true,
+                restriction: activeRestriction,
+                message: 'Your account has been permanently banned. Reason: ' + (activeRestriction.reason || 'Violation of community guidelines')
+            };
+        }
+        
+        // Check if temporary ban has expired
+        if (activeRestriction.endDate && new Date() > activeRestriction.endDate) {
+            // Deactivate expired restriction
+            activeRestriction.isActive = false;
+            await activeRestriction.save();
+            return { restricted: false, restriction: null, message: null };
+        }
+        
+        // Active temporary ban
+        const timeRemaining = activeRestriction.endDate ? 
+            Math.ceil((activeRestriction.endDate - new Date()) / (1000 * 60 * 60)) : 0;
+        
+        return {
+            restricted: true,
+            restriction: activeRestriction,
+            message: `Your account is temporarily restricted for ${timeRemaining} more hours. Reason: ${activeRestriction.reason || 'Violation of community guidelines'}`
+        };
+        
+    } catch (error) {
+        console.error('Error checking user restriction:', error);
+        return { restricted: false, restriction: null, message: null };
+    }
+}
+
+/**
+ * Middleware to block restricted users from accessing certain routes
+ */
+async function requireNotRestricted(req, res, next) {
+    if (!req.session.userId) {
+        return res.redirect('/login');
+    }
+    
+    const restrictionStatus = await checkUserRestriction(req.session.userId);
+    
+    if (restrictionStatus.restricted) {
+        // Log the blocked attempt
+        await logActivity(req.session.userId, 'RESTRICTED_ACCESS_ATTEMPT', 'ROUTE', req.path,
+                         `Restricted user attempted to access: ${req.path}`, getClientIp(req));
+        
+        return res.status(403).render('error', {
+            message: 'Account Restricted',
+            detail: restrictionStatus.message
+        });
+    }
+    
+    next();
+}
+
+// ============================================
 // EXPORTS
 // ============================================
 
@@ -759,5 +841,9 @@ module.exports = {
     
     // Logging (2.4.5, 2.4.6)
     logActivity,
-    getClientIp
+    getClientIp,
+    
+    // User Restrictions
+    checkUserRestriction,
+    requireNotRestricted
 };

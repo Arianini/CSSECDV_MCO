@@ -326,9 +326,29 @@ app.get('/admin/users', requireAuth, requireRole('administrator'), async (req, r
     try {
         const users = await User.find().select('-password -passwordHistory -securityAnswer');
         
+        // Check restriction status for each user
+        const usersWithStatus = await Promise.all(users.map(async (user) => {
+            const userObj = user.toObject();
+            
+            // Check if user has active restriction
+            const activeRestriction = await UserRestriction.findOne({
+                user: user._id,
+                isActive: true,
+                $or: [
+                    { endDate: null }, // Permanent ban
+                    { endDate: { $gte: new Date() } } // Temporary ban that hasn't expired
+                ]
+            });
+            
+            userObj.isRestricted = !!activeRestriction;
+            userObj.restrictionInfo = activeRestriction;
+            
+            return userObj;
+        }));
+        
         res.render('admin-users', {
             user: req.currentUser,
-            users: users
+            users: usersWithStatus
         });
         
     } catch (error) {
@@ -388,21 +408,54 @@ app.post('/admin/users/:userId/unban', requireAuth, requireRole('administrator')
     }
 });
 
+// Temporary restrict user (admin only)
+app.post('/admin/users/:userId/restrict', requireAuth, requireRole('administrator'), async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const { hours, reason } = req.body;
+        
+        // Calculate end date based on hours
+        const endDate = new Date();
+        endDate.setHours(endDate.getHours() + hours);
+        
+        // Create temporary restriction
+        await UserRestriction.create({
+            user: userId,
+            restrictedBy: req.session.userId,
+            restrictionType: 'temporary_ban',
+            reason: reason || 'Temporary restriction',
+            startDate: new Date(),
+            endDate: endDate,
+            isActive: true
+        });
+        
+        await logModerationAction(req.session.userId, 'RESTRICT_USER', `Temporarily restricted user ${userId} for ${hours} hours`);
+        
+        res.json({ success: true, message: 'User restricted successfully' });
+        
+    } catch (error) {
+        console.error('Error restricting user:', error);
+        res.status(500).json({ error: 'Failed to restrict user' });
+    }
+});
+
 // Create manager account (admin only)
 app.post('/admin/create-manager', requireAuth, requireRole('administrator'), async (req, res) => {
     try {
-        const { username, password, managedTags } = req.body;
+        const { username, password, userTag, managedTags } = req.body;
         
         // Check if user already exists
-        const existingUser = await User.findOne({ username });
+        const existingUser = await User.findOne({ username: new RegExp(`^${username}$`, 'i') });
         if (existingUser) {
             return res.status(400).json({ error: 'Username already exists' });
         }
         
         // Create new manager account
+        const bcrypt = require('bcrypt');
         const hashedPassword = await bcrypt.hash(password, 10);
         await User.create({
             username: username,
+            userTag: userTag,
             password: hashedPassword,
             role: 'manager',
             managedTags: managedTags || []
@@ -415,6 +468,37 @@ app.post('/admin/create-manager', requireAuth, requireRole('administrator'), asy
     } catch (error) {
         console.error('Error creating manager:', error);
         res.status(500).json({ error: 'Failed to create manager account' });
+    }
+});
+
+// Create administrator account (admin only)
+app.post('/admin/create-admin', requireAuth, requireRole('administrator'), async (req, res) => {
+    try {
+        const { username, password, userTag } = req.body;
+        
+        // Check if user already exists
+        const existingUser = await User.findOne({ username: new RegExp(`^${username}$`, 'i') });
+        if (existingUser) {
+            return res.status(400).json({ error: 'Username already exists' });
+        }
+        
+        // Create new administrator account
+        const bcrypt = require('bcrypt');
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await User.create({
+            username: username,
+            userTag: userTag,
+            password: hashedPassword,
+            role: 'administrator'
+        });
+        
+        await logModerationAction(req.session.userId, 'CREATE_ADMIN', `Created administrator account: ${username}`);
+        
+        res.json({ success: true, message: 'Administrator account created successfully' });
+        
+    } catch (error) {
+        console.error('Error creating administrator:', error);
+        res.status(500).json({ error: 'Failed to create administrator account' });
     }
 });
 
