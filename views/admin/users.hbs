@@ -1,0 +1,1105 @@
+<style>
+    .admin-container {
+        max-width: 1400px;
+        margin: 20px auto;
+        padding: 20px;
+    }
+
+    .header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .btn {
+        padding: 12px 24px;
+        background: #667eea;
+        color: white;
+        text-decoration: none;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+
+    .btn:hover {
+        background: #764ba2;
+    }
+
+    .btn:disabled {
+        background: #555;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    .btn-danger {
+        background: #dc3545;
+    }
+
+    .btn-danger:hover {
+        background: #c82333;
+    }
+
+    .users-table {
+        width: 100%;
+        background: #1f1f1f;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .users-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .users-table th {
+        background: #667eea;
+        padding: 15px;
+        text-align: left;
+    }
+
+    .users-table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #333;
+    }
+
+    .users-table tr:hover {
+        background: #2a2a2a;
+    }
+
+    .role-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .role-administrator {
+        background: #dc3545;
+    }
+
+    .role-manager {
+        background: #ffc107;
+        color: #000;
+    }
+
+    .role-user {
+        background: #28a745;
+    }
+
+    .actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    /* MODAL STYLES */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        background: #242526;
+        width: 550px;
+        max-height: 90vh;
+        overflow-y: auto;
+        border-radius: 10px;
+        padding: 30px;
+        color: white;
+        position: relative;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        animation: modalSlideIn 0.3s ease-out;
+    }
+
+    @keyframes modalSlideIn {
+        from {
+            transform: translateY(-50px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    /* CONFIRMATION MODAL STYLES */
+    .confirm-modal-content {
+        background: #242526;
+        width: 450px;
+        border-radius: 10px;
+        padding: 30px;
+        color: white;
+        position: relative;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        animation: modalSlideIn 0.3s ease-out;
+    }
+
+    .confirm-modal-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #444;
+    }
+
+    .confirm-modal-header i {
+        font-size: 32px;
+        margin-right: 15px;
+    }
+
+    .confirm-modal-header.warning i {
+        color: #ffc107;
+    }
+
+    .confirm-modal-header.danger i {
+        color: #dc3545;
+    }
+
+    .confirm-modal-header.success i {
+        color: #28a745;
+    }
+
+    .confirm-modal-header h3 {
+        margin: 0;
+        font-size: 20px;
+    }
+
+    .confirm-modal-body {
+        margin-bottom: 25px;
+        font-size: 15px;
+        line-height: 1.6;
+        color: #cbd5e0;
+    }
+
+    .confirm-modal-footer {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+    }
+
+    .confirm-btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.3s;
+    }
+
+    .confirm-btn-cancel {
+        background: #6c757d;
+        color: white;
+    }
+
+    .confirm-btn-cancel:hover {
+        background: #5a6268;
+    }
+
+    .confirm-btn-confirm {
+        background: #667eea;
+        color: white;
+    }
+
+    .confirm-btn-confirm:hover {
+        background: #764ba2;
+    }
+
+    .confirm-btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+
+    .confirm-btn-danger:hover {
+        background: #c82333;
+    }
+
+    /* SUCCESS NOTIFICATION */
+    .success-notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+        padding: 15px 25px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        display: none;
+        align-items: center;
+        gap: 12px;
+        z-index: 2000;
+        animation: slideInRight 0.3s ease-out;
+    }
+
+    .success-notification.show {
+        display: flex;
+    }
+
+    @keyframes slideInRight {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    .success-notification i {
+        font-size: 24px;
+    }
+
+    .success-notification-content {
+        flex: 1;
+    }
+
+    .success-notification-title {
+        font-weight: bold;
+        margin-bottom: 3px;
+    }
+
+    .success-notification-message {
+        font-size: 13px;
+        opacity: 0.9;
+    }
+
+    /* ERROR NOTIFICATION */
+    .error-notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #dc3545, #e74c3c);
+        color: white;
+        padding: 15px 25px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        display: none;
+        align-items: center;
+        gap: 12px;
+        z-index: 2000;
+        animation: slideInRight 0.3s ease-out;
+    }
+
+    .error-notification.show {
+        display: flex;
+    }
+
+    .modal-content h2 {
+        margin-top: 0;
+        margin-bottom: 20px;
+        color: #fff;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+        position: relative;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #e2e8f0;
+        font-weight: 500;
+        font-size: 14px;
+    }
+
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 12px;
+        padding-right: 45px;
+        border-radius: 5px;
+        border: 1px solid #444;
+        background: #1a202c;
+        color: white;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .tags-input {
+        margin-top: 5px;
+        font-size: 12px;
+        color: #aaa;
+    }
+
+    .close-btn {
+        position: absolute;
+        right: 20px;
+        top: 20px;
+        font-size: 28px;
+        cursor: pointer;
+        color: #999;
+        line-height: 20px;
+        transition: color 0.3s;
+    }
+
+    .close-btn:hover {
+        color: #fff;
+    }
+
+    /* PASSWORD CONTAINER */
+    .password-container {
+        position: relative;
+        width: 100%;
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #999;
+        z-index: 10;
+        font-size: 16px;
+    }
+
+    .password-toggle:hover {
+        color: #fff;
+    }
+
+    /* PASSWORD REQUIREMENTS */
+    .password-requirements {
+        background: #1a202c;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 10px 0;
+        font-size: 13px;
+        position: relative;
+        border: 1px solid #2d3748;
+    }
+
+    .password-requirements h4 {
+        margin: 0 0 10px 0;
+        color: #48bb78;
+        font-size: 14px;
+        font-weight: bold;
+    }
+
+    .password-requirements ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .password-requirements li {
+        padding: 5px 0;
+        display: flex;
+        align-items: center;
+        color: #cbd5e0;
+        transition: color 0.3s;
+    }
+
+    .password-requirements li i {
+        margin-right: 8px;
+        width: 16px;
+        font-size: 12px;
+    }
+
+    .password-requirements li.valid {
+        color: #48bb78;
+    }
+
+    .password-requirements li.invalid {
+        color: #f56565;
+    }
+
+    /* PASSWORD STRENGTH BAR */
+    .password-strength-bar {
+        height: 8px;
+        background: #1a202c;
+        border-radius: 4px;
+        margin: 10px 0;
+        overflow: hidden;
+        position: relative;
+        border: 1px solid #2d3748;
+    }
+
+    .password-strength-fill {
+        height: 100%;
+        width: 0%;
+        transition: width 0.3s, background-color 0.3s;
+        border-radius: 4px;
+    }
+
+    .strength-weak { 
+        background: linear-gradient(90deg, #f56565, #fc8181);
+        width: 33%;
+    }
+
+    .strength-medium { 
+        background: linear-gradient(90deg, #ed8936, #f6ad55);
+        width: 66%;
+    }
+
+    .strength-strong { 
+        background: linear-gradient(90deg, #48bb78, #68d391);
+        width: 100%;
+    }
+
+    .strength-label {
+        font-size: 12px;
+        margin-top: 5px;
+        font-weight: bold;
+    }
+
+    .strength-label.weak { color: #f56565; }
+    .strength-label.medium { color: #ed8936; }
+    .strength-label.strong { color: #48bb78; }
+
+    /* PASSWORD MATCH WARNING */
+    .password-match-warning {
+        display: none;
+        color: #f56565;
+        font-size: 12px;
+        margin-top: 5px;
+    }
+
+    .password-match-warning.show {
+        display: block;
+    }
+
+    .password-match-success {
+        display: none;
+        color: #48bb78;
+        font-size: 12px;
+        margin-top: 5px;
+    }
+
+    .password-match-success.show {
+        display: block;
+    }
+</style>
+
+<div class="admin-container">
+    <div class="header-row">
+        <h1>👥 User Management</h1>
+        <div>
+            <button class="btn" onclick="openCreateUserModal()">
+                <i class="fa-solid fa-user-plus"></i> Create User
+            </button>
+            <a href="/admin" class="btn">Back to Dashboard</a>
+        </div>
+    </div>
+
+    <div class="users-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>User Tag</th>
+                    <th>Role</th>
+                    <th>Managed Tags</th>
+                    <th>Created</th>
+                    <th>Last Login</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each users}}
+                <tr>
+                    <td>{{username}}</td>
+                    <td>{{userTag}}</td>
+                    <td>
+                        <span class="role-badge role-{{role}}">{{role}}</span>
+                    </td>
+                    <td>
+                        {{#if managedTags.length}}
+                            {{#each managedTags}}
+                                <span class="role-badge" style="background: #17a2b8;">{{this}}</span>
+                            {{/each}}
+                        {{else}}
+                            -
+                        {{/if}}
+                    </td>
+                    <td>{{formatDate createdAt "YYYY-MM-DD"}}</td>
+                    <td>
+                        {{#if lastLogin}}
+                            {{formatDate lastLogin "YYYY-MM-DD HH:mm"}}
+                        {{else}}
+                            Never
+                        {{/if}}
+                    </td>
+                    <td>
+                        <div class="actions">
+                            <button class="btn" onclick="openEditRoleModal('{{_id}}', '{{username}}', '{{role}}', '{{managedTags}}')">
+                                <i class="fa-solid fa-user-cog"></i> Edit Role
+                            </button>
+                            <button class="btn btn-danger" onclick="deleteUser('{{_id}}', '{{username}}')">
+                                <i class="fa-solid fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {{else}}
+                <tr>
+                    <td colspan="7" style="text-align: center;">No users found</td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Create User Modal -->
+<div id="createUserModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeCreateUserModal()">&times;</span>
+        <h2><i class="fa-solid fa-user-plus"></i> Create New User</h2>
+        <form id="createUserForm">
+            <div class="form-group">
+                <label>Username:</label>
+                <input type="text" 
+                       id="create-username" 
+                       required 
+                       minlength="3"
+                       maxlength="20"
+                       pattern="[a-zA-Z0-9_]+"
+                       placeholder="Username (3-20 chars, alphanumeric + underscore only)">
+            </div>
+            
+            <div class="form-group">
+                <label>Password:</label>
+                <div class="password-container">
+                    <input type="password" 
+                           id="create-password" 
+                           required
+                           minlength="8"
+                           placeholder="Enter a strong password">
+                    <i class="fa-solid fa-eye-slash password-toggle" 
+                       id="create-password-toggle"
+                       onclick="togglePasswordVisibility('create-password')"></i>
+                </div>
+                
+                <!-- Password Strength Indicator -->
+                <div class="password-strength-bar">
+                    <div id="create-strength-fill" class="password-strength-fill"></div>
+                </div>
+                <div id="create-strength-label" class="strength-label"></div>
+
+                <!-- Password Requirements Checklist -->
+                <div class="password-requirements">
+                    <h4><i class="fa-solid fa-shield-halved"></i> Password Requirements:</h4>
+                    <ul id="create-requirements-list">
+                        <li id="create-req-length" class="invalid">
+                            <i class="fa-solid fa-xmark"></i>
+                            <span>At least 8 characters</span>
+                        </li>
+                        <li id="create-req-uppercase" class="invalid">
+                            <i class="fa-solid fa-xmark"></i>
+                            <span>One uppercase letter (A-Z)</span>
+                        </li>
+                        <li id="create-req-lowercase" class="invalid">
+                            <i class="fa-solid fa-xmark"></i>
+                            <span>One lowercase letter (a-z)</span>
+                        </li>
+                        <li id="create-req-number" class="invalid">
+                            <i class="fa-solid fa-xmark"></i>
+                            <span>One number (0-9)</span>
+                        </li>
+                        <li id="create-req-special" class="invalid">
+                            <i class="fa-solid fa-xmark"></i>
+                            <span>One special character (!@#$%^&*)</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Confirm Password:</label>
+                <div class="password-container">
+                    <input type="password" 
+                           id="create-confirm-password" 
+                           required
+                           minlength="8"
+                           placeholder="Re-enter your password">
+                    <i class="fa-solid fa-eye-slash password-toggle" 
+                       id="create-confirm-password-toggle"
+                       onclick="togglePasswordVisibility('create-confirm-password')"></i>
+                </div>
+                <div id="password-match-warning" class="password-match-warning">
+                    <i class="fa-solid fa-xmark"></i> Passwords do not match
+                </div>
+                <div id="password-match-success" class="password-match-success">
+                    <i class="fa-solid fa-check"></i> Passwords match
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Role:</label>
+                <select id="create-role" onchange="toggleManagedTags('create')">
+                    <option value="user">User</option>
+                    <option value="manager">Manager</option>
+                    <option value="administrator">Administrator</option>
+                </select>
+            </div>
+            
+            <div class="form-group" id="create-tags-group" style="display: none;">
+                <label>Managed Tags (comma-separated):</label>
+                <input type="text" id="create-tags" placeholder="e.g., Food, Travel, Gaming">
+                <div class="tags-input">For managers only. Enter tags separated by commas.</div>
+            </div>
+            
+            <button type="submit" class="btn" id="create-user-btn" disabled>
+                <i class="fa-solid fa-user-plus"></i> Create User
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Role Modal -->
+<div id="editRoleModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeEditRoleModal()">&times;</span>
+        <h2><i class="fa-solid fa-user-cog"></i> Edit User Role</h2>
+        <form id="editRoleForm">
+            <input type="hidden" id="edit-user-id">
+            <div class="form-group">
+                <label>Username:</label>
+                <input type="text" id="edit-username" disabled>
+            </div>
+            <div class="form-group">
+                <label>Role:</label>
+                <select id="edit-role" onchange="toggleManagedTags('edit')">
+                    <option value="user">User</option>
+                    <option value="manager">Manager</option>
+                    <option value="administrator">Administrator</option>
+                </select>
+            </div>
+            <div class="form-group" id="edit-tags-group" style="display: none;">
+                <label>Managed Tags (comma-separated):</label>
+                <input type="text" id="edit-tags" placeholder="e.g., Food, Travel, Gaming">
+                <div class="tags-input">For managers only.</div>
+            </div>
+            <button type="submit" class="btn"><i class="fa-solid fa-save"></i> Update Role</button>
+        </form>
+    </div>
+</div>
+
+<!-- Custom Confirmation Modal -->
+<div id="confirmModal" class="modal">
+    <div class="confirm-modal-content">
+        <div class="confirm-modal-header" id="confirmHeader">
+            <i class="fa-solid fa-question-circle"></i>
+            <h3 id="confirmTitle">Confirm Action</h3>
+        </div>
+        <div class="confirm-modal-body" id="confirmMessage">
+            Are you sure you want to proceed?
+        </div>
+        <div class="confirm-modal-footer">
+            <button class="confirm-btn confirm-btn-cancel" onclick="closeConfirmModal()">
+                <i class="fa-solid fa-times"></i> Cancel
+            </button>
+            <button class="confirm-btn confirm-btn-confirm" id="confirmButton" onclick="confirmAction()">
+                <i class="fa-solid fa-check"></i> Confirm
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Success Notification -->
+<div id="successNotification" class="success-notification">
+    <i class="fa-solid fa-check-circle"></i>
+    <div class="success-notification-content">
+        <div class="success-notification-title" id="successTitle">Success!</div>
+        <div class="success-notification-message" id="successMessage">Operation completed successfully</div>
+    </div>
+</div>
+
+<!-- Error Notification -->
+<div id="errorNotification" class="error-notification">
+    <i class="fa-solid fa-exclamation-circle"></i>
+    <div class="success-notification-content">
+        <div class="success-notification-title" id="errorTitle">Error</div>
+        <div class="success-notification-message" id="errorMessage">Something went wrong</div>
+    </div>
+</div>
+
+<script>
+    // Password validation state
+    let passwordValid = false;
+    let usernameValid = false;
+    let passwordsMatch = false;
+    
+    // Confirmation modal state
+    let confirmCallback = null;
+
+    // Custom confirmation function
+    function showConfirm(title, message, onConfirm, type = 'warning') {
+        const modal = document.getElementById('confirmModal');
+        const header = document.getElementById('confirmHeader');
+        const titleEl = document.getElementById('confirmTitle');
+        const messageEl = document.getElementById('confirmMessage');
+        const confirmBtn = document.getElementById('confirmButton');
+        
+        // Set content
+        titleEl.textContent = title;
+        messageEl.textContent = message;
+        
+        // Set icon and style based on type
+        header.className = 'confirm-modal-header ' + type;
+        if (type === 'danger') {
+            header.querySelector('i').className = 'fa-solid fa-exclamation-triangle';
+            confirmBtn.className = 'confirm-btn confirm-btn-danger';
+            confirmBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
+        } else if (type === 'warning') {
+            header.querySelector('i').className = 'fa-solid fa-exclamation-circle';
+            confirmBtn.className = 'confirm-btn confirm-btn-confirm';
+            confirmBtn.innerHTML = '<i class="fa-solid fa-check"></i> Confirm';
+        } else {
+            header.querySelector('i').className = 'fa-solid fa-question-circle';
+            confirmBtn.className = 'confirm-btn confirm-btn-confirm';
+            confirmBtn.innerHTML = '<i class="fa-solid fa-check"></i> Confirm';
+        }
+        
+        // Store callback
+        confirmCallback = onConfirm;
+        
+        // Show modal
+        modal.style.display = 'flex';
+    }
+
+    function closeConfirmModal() {
+        document.getElementById('confirmModal').style.display = 'none';
+        confirmCallback = null;
+    }
+
+    function confirmAction() {
+        if (confirmCallback) {
+            confirmCallback();
+        }
+        closeConfirmModal();
+    }
+
+    // Success notification
+    function showSuccess(title, message) {
+        const notification = document.getElementById('successNotification');
+        document.getElementById('successTitle').textContent = title;
+        document.getElementById('successMessage').textContent = message;
+        notification.classList.add('show');
+        
+        setTimeout(() => {
+            notification.classList.remove('show');
+        }, 3000);
+    }
+
+    // Error notification
+    function showError(title, message) {
+        const notification = document.getElementById('errorNotification');
+        document.getElementById('errorTitle').textContent = title;
+        document.getElementById('errorMessage').textContent = message;
+        notification.classList.add('show');
+        
+        setTimeout(() => {
+            notification.classList.remove('show');
+        }, 4000);
+    }
+
+    function openCreateUserModal() {
+        document.getElementById('createUserModal').style.display = 'flex';
+        passwordValid = false;
+        usernameValid = false;
+        passwordsMatch = false;
+        updateCreateButton();
+    }
+
+    function closeCreateUserModal() {
+        document.getElementById('createUserModal').style.display = 'none';
+        document.getElementById('createUserForm').reset();
+        resetPasswordRequirements('create');
+        document.getElementById('password-match-warning').classList.remove('show');
+        document.getElementById('password-match-success').classList.remove('show');
+    }
+
+    function openEditRoleModal(userId, username, role, managedTags) {
+        document.getElementById('edit-user-id').value = userId;
+        document.getElementById('edit-username').value = username;
+        document.getElementById('edit-role').value = role;
+        document.getElementById('edit-tags').value = managedTags;
+        
+        toggleManagedTags('edit');
+        document.getElementById('editRoleModal').style.display = 'flex';
+    }
+
+    function closeEditRoleModal() {
+        document.getElementById('editRoleModal').style.display = 'none';
+    }
+
+    function toggleManagedTags(prefix) {
+        const role = document.getElementById(`${prefix}-role`).value;
+        const tagsGroup = document.getElementById(`${prefix}-tags-group`);
+        tagsGroup.style.display = role === 'manager' ? 'block' : 'none';
+    }
+
+    function togglePasswordVisibility(fieldId) {
+        const field = document.getElementById(fieldId);
+        const icon = document.getElementById(fieldId + '-toggle');
+        
+        if (field.type === 'password') {
+            field.type = 'text';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        } else {
+            field.type = 'password';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        }
+    }
+
+    function updateRequirement(prefix, reqId, isValid) {
+        const elem = document.getElementById(`${prefix}-${reqId}`);
+        if (!elem) return;
+        
+        const icon = elem.querySelector('i');
+        
+        if (isValid) {
+            elem.classList.remove('invalid');
+            elem.classList.add('valid');
+            icon.classList.remove('fa-xmark');
+            icon.classList.add('fa-check');
+        } else {
+            elem.classList.remove('valid');
+            elem.classList.add('invalid');
+            icon.classList.remove('fa-check');
+            icon.classList.add('fa-xmark');
+        }
+    }
+
+    function updateStrengthBar(prefix, validCount) {
+        const fill = document.getElementById(`${prefix}-strength-fill`);
+        const label = document.getElementById(`${prefix}-strength-label`);
+        
+        if (!fill || !label) return;
+        
+        fill.className = 'password-strength-fill';
+        label.className = 'strength-label';
+        
+        if (validCount === 0) {
+            label.textContent = '';
+        } else if (validCount <= 2) {
+            fill.classList.add('strength-weak');
+            label.classList.add('weak');
+            label.textContent = '🔴 Weak Password';
+        } else if (validCount === 3 || validCount === 4) {
+            fill.classList.add('strength-medium');
+            label.classList.add('medium');
+            label.textContent = '🟡 Medium Password';
+        } else if (validCount === 5) {
+            fill.classList.add('strength-strong');
+            label.classList.add('strong');
+            label.textContent = '🟢 Strong Password';
+        }
+    }
+
+    function resetPasswordRequirements(prefix) {
+        const requirements = ['length', 'uppercase', 'lowercase', 'number', 'special'];
+        requirements.forEach(req => {
+            updateRequirement(prefix, `req-${req}`, false);
+        });
+        updateStrengthBar(prefix, 0);
+    }
+
+    function validatePassword(password, prefix) {
+        const checks = {
+            length: password.length >= 8,
+            uppercase: /[A-Z]/.test(password),
+            lowercase: /[a-z]/.test(password),
+            number: /[0-9]/.test(password),
+            special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+        };
+        
+        updateRequirement(prefix, 'req-length', checks.length);
+        updateRequirement(prefix, 'req-uppercase', checks.uppercase);
+        updateRequirement(prefix, 'req-lowercase', checks.lowercase);
+        updateRequirement(prefix, 'req-number', checks.number);
+        updateRequirement(prefix, 'req-special', checks.special);
+        
+        const validCount = Object.values(checks).filter(v => v).length;
+        updateStrengthBar(prefix, validCount);
+        
+        return validCount === 5;
+    }
+
+    function checkPasswordMatch() {
+        const password = document.getElementById('create-password').value;
+        const confirmPassword = document.getElementById('create-confirm-password').value;
+        const warningElement = document.getElementById('password-match-warning');
+        const successElement = document.getElementById('password-match-success');
+        
+        if (confirmPassword.length === 0) {
+            warningElement.classList.remove('show');
+            successElement.classList.remove('show');
+            passwordsMatch = false;
+        } else if (password === confirmPassword) {
+            warningElement.classList.remove('show');
+            successElement.classList.add('show');
+            passwordsMatch = true;
+        } else {
+            warningElement.classList.add('show');
+            successElement.classList.remove('show');
+            passwordsMatch = false;
+        }
+        
+        updateCreateButton();
+    }
+
+    function updateCreateButton() {
+        const button = document.getElementById('create-user-btn');
+        button.disabled = !(passwordValid && usernameValid && passwordsMatch);
+    }
+
+    document.getElementById('create-username').addEventListener('input', function() {
+        const username = this.value;
+        const isValid = username.length >= 3 && username.length <= 20 && /^[a-zA-Z0-9_]+$/.test(username);
+        usernameValid = isValid;
+        updateCreateButton();
+    });
+
+    document.getElementById('create-password').addEventListener('input', function() {
+        const password = this.value;
+        passwordValid = validatePassword(password, 'create');
+        checkPasswordMatch();
+        updateCreateButton();
+    });
+
+    document.getElementById('create-confirm-password').addEventListener('input', function() {
+        checkPasswordMatch();
+    });
+
+    document.getElementById('createUserForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        if (!passwordValid) {
+            showError('Invalid Password', 'Password does not meet all requirements!');
+            return;
+        }
+        
+        if (!usernameValid) {
+            showError('Invalid Username', 'Username must be 3-20 characters and contain only letters, numbers, and underscores!');
+            return;
+        }
+
+        if (!passwordsMatch) {
+            showError('Passwords Mismatch', 'Passwords do not match!');
+            return;
+        }
+        
+        const username = document.getElementById('create-username').value;
+        const password = document.getElementById('create-password').value;
+        const role = document.getElementById('create-role').value;
+        const managedTags = document.getElementById('create-tags').value;
+
+        try {
+            const response = await fetch('/admin/users/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password, role, managedTags })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                closeCreateUserModal();
+                showSuccess('User Created!', `User "${username}" has been created successfully.`);
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showError('Creation Failed', data.error || 'Failed to create user');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showError('Network Error', 'Failed to create user. Please try again.');
+        }
+    });
+
+    document.getElementById('editRoleForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const userId = document.getElementById('edit-user-id').value;
+        const role = document.getElementById('edit-role').value;
+        const managedTags = document.getElementById('edit-tags').value;
+
+        try {
+            const response = await fetch(`/admin/users/${userId}/role`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ role, managedTags })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                closeEditRoleModal();
+                showSuccess('Role Updated!', 'User role has been updated successfully.');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showError('Update Failed', data.error || 'Failed to update user role');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showError('Network Error', 'Failed to update user role. Please try again.');
+        }
+    });
+
+    async function deleteUser(userId, username) {
+        showConfirm(
+            'Delete User',
+            `Are you sure you want to delete user "${username}"? This action cannot be undone.`,
+            async function() {
+                try {
+                    const response = await fetch(`/admin/users/${userId}`, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        showSuccess('User Deleted!', `User "${username}" has been deleted successfully.`);
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showError('Deletion Failed', data.error || 'Failed to delete user');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    showError('Network Error', 'Failed to delete user. Please try again.');
+                }
+            },
+            'danger'
+        );
+    }
+
+    window.onclick = function(event) {
+        const createModal = document.getElementById('createUserModal');
+        const editModal = document.getElementById('editRoleModal');
+        const confirmModalEl = document.getElementById('confirmModal');
+        
+        if (event.target === createModal) {
+            closeCreateUserModal();
+        }
+        if (event.target === editModal) {
+            closeEditRoleModal();
+        }
+        if (event.target === confirmModalEl) {
+            closeConfirmModal();
+        }
+    }
+</script>

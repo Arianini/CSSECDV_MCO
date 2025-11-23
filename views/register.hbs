@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - TikTalk</title>
+    <link rel="stylesheet" href="/styles/login.css">
+    <script src="https://kit.fontawesome.com/2616052655.js" crossorigin="anonymous"></script>
+    <style>
+        /* Additional styling for password requirements */
+        .password-requirements {
+            font-size: 12px;
+            color: #bbb;
+            margin-top: 5px;
+            text-align: left;
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .password-requirements ul {
+            list-style: none;
+            padding-left: 0;
+            margin: 5px 0 0 0;
+        }
+
+        .password-requirements li {
+            padding: 3px 0;
+            transition: color 0.3s;
+        }
+
+        .password-requirements li.valid {
+            color: #48bb78;
+        }
+
+        .password-requirements li.invalid {
+            color: #f56565;
+        }
+
+        .login-container label {
+            display: block;
+            text-align: left;
+            margin-top: 10px;
+            font-size: 14px;
+            color: white;
+        }
+
+        /* OVERRIDE: Make ALL inputs 100% width to match button */
+        .login-container input[type="text"],
+        .login-container input[type="password"],
+        .login-container select {
+            width: 100% !important;
+            padding: 10px;
+            margin-top: 8px;
+            margin-bottom: 15px;
+            border-radius: 15px;
+            border: none;
+            background: #333;
+            color: white;
+            box-sizing: border-box;
+        }
+
+        .login-container select {
+            cursor: pointer;
+        }
+
+        .login-container select option {
+            background: #333;
+            color: white;
+        }
+
+        /* Password container - 100% width */
+        .password-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .password-container input {
+            width: 100% !important;
+            padding-right: 45px !important;
+        }
+
+        .password-container i {
+            position: absolute;
+            right: 12px;
+            top: 24px;
+            cursor: pointer;
+            color: #bbb;
+            font-size: 18px;
+        }
+
+        .password-container i:hover {
+            color: #fff;
+        }
+
+        .login-container small {
+            display: block;
+            text-align: left;
+            font-size: 11px;
+            color: #888;
+            margin-top: -10px;
+            margin-bottom: 15px;
+        }
+
+        #match-warning {
+            color: #f56565;
+            font-size: 12px;
+            text-align: left;
+            margin-top: -10px;
+            margin-bottom: 10px;
+        }
+
+        .login-container button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <section class="login-container">
+            <h2>Create Account</h2>
+            
+            <form action="/register" method="POST" id="register-form">
+                <label for="username">Username:</label>
+                <input type="text" 
+                       id="username" 
+                       name="username" 
+                       required 
+                       minlength="3"
+                       maxlength="20"
+                       pattern="[a-zA-Z0-9_]+"
+                       placeholder="Choose a username"
+                       title="Username can only contain letters, numbers, and underscores">
+
+                <label for="password">Password:</label>
+                <div class="password-container">
+                    <input type="password" 
+                           id="password" 
+                           name="password" 
+                           required
+                           minlength="8"
+                           placeholder="Enter a strong password">
+                    <i id="toggle-eye-password" class="fa-solid fa-eye-slash" onclick="togglePasswordVisibility('password')"></i>
+                </div>
+                
+                <div class="password-requirements">
+                    Password must contain:
+                    <ul>
+                        <li id="req-length">âœ— At least 8 characters</li>
+                        <li id="req-uppercase">âœ— One uppercase letter</li>
+                        <li id="req-lowercase">âœ— One lowercase letter</li>
+                        <li id="req-number">âœ— One number</li>
+                        <li id="req-special">âœ— One special character (!@#$%^&*)</li>
+                    </ul>
+                </div>
+
+                <label for="confirmPassword">Confirm Password:</label>
+                <div class="password-container">
+                    <input type="password" 
+                           id="confirmPassword" 
+                           name="confirmPassword" 
+                           required
+                           minlength="8"
+                           placeholder="Re-enter your password">
+                    <i id="toggle-eye-confirmPassword" class="fa-solid fa-eye-slash" onclick="togglePasswordVisibility('confirmPassword')"></i>
+                </div>
+                <small id="match-warning" style="display: none;">âš  Passwords do not match</small>
+
+                <label for="securityQuestion">Security Question (Required):</label>
+                <select id="securityQuestion" name="securityQuestion" required>
+                    <option value="">-- Select a Question --</option>
+                    <option value="What is the name of your first pet?">What is the name of your first pet?</option>
+                    <option value="What street did you grow up on?">What street did you grow up on?</option>
+                    <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
+                    <option value="What was the model of your first car?">What was the model of your first car?</option>
+                    <option value="In what city were you born?">In what city were you born?</option>
+                </select>
+
+                <label for="securityAnswer">Security Answer (Required):</label>
+                <input type="text" 
+                       id="securityAnswer" 
+                       name="securityAnswer"
+                       required
+                       minlength="3"
+                       placeholder="Avoid common answers like 'The Bible', 'Pizza', etc.">
+                <small>Choose a unique answer (not commonly used). This will be used to reset your password if you forget it.</small>
+
+                <button type="submit" id="register-btn" disabled>Register</button>
+                
+                <p>Already have an account? <a href="/login">Login here</a></p>
+            </form>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 TikTalk Archers</p>
+    </footer>
+
+    <script>
+        // Toggle password visibility
+        function togglePasswordVisibility(field) {
+            let passwordField = document.getElementById(field);
+            let eyeIcon = document.getElementById('toggle-eye-' + field);
+
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text'; 
+                eyeIcon.classList.remove('fa-eye-slash');  
+                eyeIcon.classList.add('fa-eye');  
+            } else {
+                passwordField.type = 'password'; 
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');  
+            }
+        }
+
+        // Real-time password validation feedback
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+        const registerBtn = document.getElementById('register-btn');
+        const matchWarning = document.getElementById('match-warning');
+
+        let passwordValid = false;
+        let passwordsMatch = false;
+
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            
+            // Check requirements
+            const hasLength = password.length >= 8;
+            const hasUppercase = /[A-Z]/.test(password);
+            const hasLowercase = /[a-z]/.test(password);
+            const hasNumber = /[0-9]/.test(password);
+            const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+            
+            // Update UI
+            updateRequirement('req-length', hasLength);
+            updateRequirement('req-uppercase', hasUppercase);
+            updateRequirement('req-lowercase', hasLowercase);
+            updateRequirement('req-number', hasNumber);
+            updateRequirement('req-special', hasSpecial);
+
+            // Check if all requirements are met
+            passwordValid = hasLength && hasUppercase && hasLowercase && hasNumber && hasSpecial;
+            
+            // Check password match
+            checkPasswordMatch();
+            updateButtonState();
+        });
+
+        confirmPasswordInput.addEventListener('input', function() {
+            checkPasswordMatch();
+            updateButtonState();
+        });
+
+        function updateRequirement(id, isValid) {
+            const elem = document.getElementById(id);
+            if (isValid) {
+                elem.classList.add('valid');
+                elem.classList.remove('invalid');
+                elem.textContent = elem.textContent.replace('âœ—', 'âœ“');
+            } else {
+                elem.classList.add('invalid');
+                elem.classList.remove('valid');
+                elem.textContent = elem.textContent.replace('âœ“', 'âœ—');
+            }
+        }
+
+        function checkPasswordMatch() {
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+            
+            if (confirmPassword.length > 0) {
+                if (password === confirmPassword) {
+                    matchWarning.style.display = 'none';
+                    passwordsMatch = true;
+                } else {
+                    matchWarning.style.display = 'block';
+                    passwordsMatch = false;
+                }
+            } else {
+                matchWarning.style.display = 'none';
+                passwordsMatch = false;
+            }
+        }
+
+        function updateButtonState() {
+            const username = document.getElementById('username').value;
+            const securityQuestion = document.getElementById('securityQuestion').value;
+            const securityAnswer = document.getElementById('securityAnswer').value;
+            
+            if (username.length >= 3 && passwordValid && passwordsMatch && 
+                securityQuestion && securityAnswer.length >= 3) {
+                registerBtn.disabled = false;
+            } else {
+                registerBtn.disabled = true;
+            }
+        }
+
+        // Also check username input
+        document.getElementById('username').addEventListener('input', updateButtonState);
+        
+        // Check security question and answer
+        document.getElementById('securityQuestion').addEventListener('change', updateButtonState);
+        document.getElementById('securityAnswer').addEventListener('input', updateButtonState);
+
+        // Form submission validation
+        document.getElementById('register-form').addEventListener('submit', function(e) {
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+            
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                alert('Passwords do not match!');
+                return false;
+            }
+
+            if (!passwordValid) {
+                e.preventDefault();
+                alert('Password does not meet all requirements!');
+                return false;
+            }
+        });
+    </script>
+</body>
+</html>

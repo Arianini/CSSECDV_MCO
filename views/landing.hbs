@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTalk - Welcome</title>
+    <link rel="stylesheet" href="/styles/PageTemplate.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .landing-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            color: white;
+        }
+
+        .logo-large {
+            width: 150px;
+            height: 150px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo-large img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        h1 {
+            font-size: 48px;
+            margin: 0 0 10px 0;
+            font-weight: bold;
+        }
+
+        .tagline {
+            font-size: 20px;
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 18px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.3s, box-shadow 0.3s;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background: white;
+            color: #667eea;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            max-width: 1000px;
+            margin-top: 50px;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .feature-card i {
+            font-size: 40px;
+            margin-bottom: 15px;
+        }
+
+        .feature-card h3 {
+            margin: 10px 0;
+            font-size: 20px;
+        }
+
+        .feature-card p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        footer {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            text-align: center;
+            color: white;
+        }
+    </style>
+    <script src="https://kit.fontawesome.com/2616052655.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="landing-container">
+        <div class="logo-large">
+            <img src="/styles/images/logo.jpg" alt="TikTalk Logo">
+        </div>
+
+        <h1>Welcome to TikTalk</h1>
+        <p class="tagline">Connect, Share, and Engage with Your Community</p>
+
+        <div class="cta-buttons">
+            <a href="/register" class="btn btn-primary">Get Started</a>
+            <a href="/login" class="btn btn-secondary">Login</a>
+        </div>
+
+        <div class="features">
+            <div class="feature-card">
+                <i class="fa-solid fa-users"></i>
+                <h3>Community Driven</h3>
+                <p>Join conversations and connect with people who share your interests</p>
+            </div>
+            <div class="feature-card">
+                <i class="fa-solid fa-shield-halved"></i>
+                <h3>Secure Platform</h3>
+                <p>Your data is protected with industry-standard security measures</p>
+            </div>
+            <div class="feature-card">
+                <i class="fa-solid fa-comment-dots"></i>
+                <h3>Real-time Updates</h3>
+                <p>Stay connected with instant notifications and live interactions</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

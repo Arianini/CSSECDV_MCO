@@ -1,0 +1,449 @@
+<link rel="stylesheet" href="/styles/PostTemplate.css">
+
+{{#if showLoginMessage}}
+{{#if previousLogin}}
+<div class="last-login-banner" style="background: #2d3748; color: #48bb78; padding: 10px; text-align: center; border-bottom: 2px solid #48bb78;">
+    <i class="fa-solid fa-circle-check"></i>
+    <strong>Welcome back!</strong> Your last login was on 
+    <strong>{{formatDate previousLogin}}</strong>
+</div>
+{{else}}
+<div class="last-login-banner" style="background: #2d3748; color: #48bb78; padding: 10px; text-align: center; border-bottom: 2px solid #48bb78;">
+    <i class="fa-solid fa-star"></i>
+    <strong>Welcome!</strong> This is your first login.
+</div>
+{{/if}}
+{{/if}}
+
+<script>
+// Auto-dismiss the banner after 5 seconds
+setTimeout(function() {
+    const banner = document.querySelector('.last-login-banner');
+    if (banner) {
+        banner.style.transition = 'opacity 0.5s';
+        banner.style.opacity = '0';
+        setTimeout(function() {
+            banner.remove();
+        }, 500);
+    }
+}, 5000);
+</script>
+
+<div class="body-container">
+    <div class="left-block">
+        <h1>Find Your Community!</h1>
+        <div class="community-list">
+            <a href="/posts/Gaming">ðŸŽ® Gaming</a>
+            <a href="/posts/Food">ðŸ” Food</a>
+            <a href="/posts/Coffee">â˜• Coffee</a>
+            <a href="/posts/Baking">ðŸ° Baking</a>
+            <a href="/posts/Travel">âœˆï¸ Travel</a>
+            <a href="/posts/Technology">ðŸ’» Technology</a>
+        </div>
+    </div>
+
+    <div class="middle-block">
+        <div class="post-feed">
+            <h2>Recent Posts</h2>
+            {{#each posts}}
+                {{> post this userProfile=../userProfile}}
+            {{/each}}
+        </div>
+    </div>
+</div>
+
+<!-- Create Post Modal -->
+<div id="create-post-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Create a Post</h2>
+            <span class="close" onclick="closeCreatePostModal()">&times;</span>
+        </div>
+
+        <div class="modal-body">
+            <div class="modal-profile">
+                <img src="{{userProfile.profilePic}}" alt="Profile Picture" class="profile-picture">
+                <span>{{userProfile.username}}</span>
+            </div>
+            <textarea id="post-caption" placeholder="What's on your mind?"></textarea>
+
+            <!-- Post Tag Dropdown -->
+            <select id="post-tag" required style="width: 100%; padding: 10px; margin: 10px 0; background: #3a3b3c; border: none; color: white; border-radius: 5px;">
+                <option value="">-- Select Category --</option>
+                <option value="Food">ðŸ” Food</option>
+                <option value="Coffee">â˜• Coffee</option>
+                <option value="Baking">ðŸ° Baking</option>
+                <option value="Travel">âœˆï¸ Travel</option>
+                <option value="Gaming">ðŸŽ® Gaming</option>
+                <option value="Technology">ðŸ’» Technology</option>
+                <option value="Sports">âš½ Sports</option>
+                <option value="Music">ðŸŽµ Music</option>
+                <option value="Art">ðŸŽ¨ Art</option>
+                <option value="General">ðŸ’¬ General</option>
+            </select>
+            
+            <!-- Emoji Picker -->
+            <div class="emoji-picker">
+                <span onclick="addEmoji('ðŸ˜€')">ðŸ˜€</span>
+                <span onclick="addEmoji('â¤ï¸')">â¤ï¸</span>
+                <span onclick="addEmoji('ðŸ˜‚')">ðŸ˜‚</span>
+                <span onclick="addEmoji('ðŸ˜¢')">ðŸ˜¢</span>
+                <span onclick="addEmoji('ðŸ˜¡')">ðŸ˜¡</span>
+            </div>
+
+            <!-- Image Upload -->
+            <label for="post-image" class="custom-upload-btn">ðŸ“· Upload Image</label>
+            <input type="file" id="post-image" accept="image/*" onchange="previewImage(event)" style="display: none;">
+
+            <!-- Image Preview -->
+            <div id="image-preview-container" style="display: none; max-height: 250px; overflow-y: auto;">
+                <img id="preview-image" src="" alt="Image Preview" style="max-width: 100%; display: block;">
+            </div>
+            
+            <!-- Post Button -->
+            <button class="post-btn" id="submit-post-btn">Post</button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================
+     ðŸ†• REPORT MODAL - ADD THIS SECTION
+     ============================================ -->
+<div id="reportModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px);">
+    <div class="report-modal-content" style="position: relative; background: #1f1f1f; width: 90%; max-width: 500px; margin: 100px auto; border-radius: 15px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5); animation: slideDown 0.3s ease-out;">
+        <div class="report-modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px 25px; border-bottom: 1px solid #333;">
+            <h2 style="color: #fff; margin: 0; font-size: 22px; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-flag" style="color: #667eea;"></i> Report Post
+            </h2>
+            <span class="report-close" onclick="closeReportModal()" style="color: #aaa; font-size: 32px; font-weight: bold; cursor: pointer; transition: color 0.2s;">&times;</span>
+        </div>
+        <div class="report-modal-body" style="padding: 25px;">
+            <form id="reportForm" onsubmit="submitReport(event)">
+                <input type="hidden" id="reportPostId">
+                
+                <div class="report-form-group" style="margin-bottom: 20px;">
+                    <label for="reportReason" style="display: block; color: #667eea; margin-bottom: 8px; font-weight: bold;">
+                        <i class="fas fa-exclamation-triangle"></i> Reason for Report
+                    </label>
+                    <select id="reportReason" required style="width: 100%; padding: 12px; background: #2a2a2a; border: 1px solid #444; border-radius: 8px; color: #fff; font-size: 14px;">
+                        <option value="">Select a reason</option>
+                        <option value="spam">Spam or Misleading</option>
+                        <option value="harassment">Harassment or Hate Speech</option>
+                        <option value="inappropriate">Inappropriate Content</option>
+                        <option value="misinformation">False Information</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="report-form-group" style="margin-bottom: 20px;">
+                    <label for="reportDescription" style="display: block; color: #667eea; margin-bottom: 8px; font-weight: bold;">
+                        <i class="fas fa-comment"></i> Additional Details
+                    </label>
+                    <textarea 
+                        id="reportDescription" 
+                        required
+                        placeholder="Please provide more details about why you're reporting this post..."
+                        minlength="10"
+                        maxlength="500"
+                        style="width: 100%; padding: 12px; background: #2a2a2a; border: 1px solid #444; border-radius: 8px; color: #fff; font-size: 14px; font-family: inherit; resize: vertical; min-height: 100px;"
+                    ></textarea>
+                    <small style="color: #888; font-size: 12px; display: block; margin-top: 5px;">
+                        Minimum 10 characters required
+                    </small>
+                </div>
+                
+                <button type="submit" class="report-submit-btn" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s;">
+                    <i class="fas fa-paper-plane"></i> Submit Report
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes slideDown {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.report-close:hover {
+    color: #fff;
+}
+
+.report-submit-btn:hover {
+    background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+}
+
+.report-submit-btn:disabled {
+    background: #666;
+    cursor: not-allowed;
+    transform: none;
+}
+
+#reportReason:focus,
+#reportDescription:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+</style>
+<!-- ============================================
+     END REPORT MODAL
+     ============================================ -->
+
+<!-- Loading Overlay (Facebook-style) -->
+<div id="posting-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; justify-content: center; align-items: center;">
+    <div style="background: #242526; padding: 30px; border-radius: 10px; text-align: center;">
+        <div class="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
+        <p style="color: white; font-size: 18px; margin: 0;">Posting...</p>
+    </div>
+</div>
+
+<style>
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+
+<script>
+    // Modal handling
+    function openCreatePostModal() {
+        document.getElementById('create-post-modal').style.display = 'flex';
+    }
+
+    function closeCreatePostModal() {
+        document.getElementById('create-post-modal').style.display = 'none';
+        document.getElementById('post-caption').value = '';
+        document.getElementById('post-tag').value = '';
+        document.getElementById('post-image').value = '';
+        document.getElementById('image-preview-container').style.display = 'none';
+    }
+
+    // Open modal when create button is clicked
+    document.addEventListener("DOMContentLoaded", function () {
+        const createPostBtn = document.getElementById("create-post-btn");
+        const modal = document.getElementById("create-post-modal");
+
+        if (createPostBtn) {
+            createPostBtn.addEventListener("click", function (e) {
+                e.preventDefault();
+                openCreatePostModal();
+            });
+        }
+
+        // Close modal when clicking outside
+        window.addEventListener("click", function (event) {
+            if (event.target === modal) {
+                closeCreatePostModal();
+            }
+        });
+    });
+
+    // Emoji picker
+    function addEmoji(emoji) {
+        const textarea = document.getElementById('post-caption');
+        textarea.value += emoji;
+    }
+
+    // Image preview
+    function previewImage(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewContainer = document.getElementById("image-preview-container");
+                const previewImage = document.getElementById("preview-image");
+                previewImage.src = e.target.result;
+                previewContainer.style.display = "block";
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    // Toggle comments
+    function toggleComments(postId) {
+        const commentSection = document.getElementById(`comments-${postId}`);
+        if (commentSection) {
+            commentSection.style.display = 
+                (commentSection.style.display === "none" || commentSection.style.display === "") 
+                ? "block" : "none";
+        }
+    }
+
+    // Toggle comment options
+    function toggleCommentOptions(commentId) {
+        const allMenus = document.querySelectorAll(".comment-options-menu");
+        allMenus.forEach(menu => {
+            if (menu.id !== `comment-options-${commentId}`) {
+                menu.style.display = "none";
+            }
+        });
+
+        const menu = document.getElementById(`comment-options-${commentId}`);
+        if (menu) {
+            menu.style.display = (menu.style.display === "none" || menu.style.display === "") 
+                ? "block" : "none";
+        }
+    }
+
+    // Edit comment modal
+    function openEditCommentModal(commentId) {
+        const modal = document.getElementById(`edit-comment-modal-${commentId}`);
+        if (modal) {
+            modal.style.display = "flex";
+        }
+    }
+
+    function closeEditCommentModal(commentId) {
+        const modal = document.getElementById(`edit-comment-modal-${commentId}`);
+        if (modal) {
+            modal.style.display = "none";
+        }
+    }
+
+    async function saveEditedComment(commentId) {
+        const textarea = document.getElementById(`edit-comment-input-${commentId}`);
+        const newContent = textarea.value.trim();
+
+        if (!newContent) return;
+
+        const commentElement = document.getElementById(`comment-${commentId}`);
+        const postElement = commentElement.closest(".comments-section");
+        const postId = postElement?.id?.replace("comments-", "");
+
+        if (!postId) return;
+
+        try {
+            const response = await fetch(`/edit-comment/${postId}/${commentId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ updatedContent: newContent })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                const commentText = document.getElementById(`comment-text-${commentId}`);
+                if (commentText) {
+                    commentText.textContent = result.updatedComment;
+                }
+                closeEditCommentModal(commentId);
+            }
+        } catch (err) {
+            console.error("Error editing comment:", err);
+        }
+    }
+
+    // Reply section
+    function toggleReplySection(commentId) {
+        const replySection = document.getElementById(`reply-section-${commentId}`);
+        if (replySection) {
+            replySection.style.display = 
+                (replySection.style.display === "none" || replySection.style.display === "") 
+                ? "block" : "none";
+        }
+    }
+
+    function cancelReply(commentId) {
+        document.getElementById(`reply-input-${commentId}`).value = "";
+        toggleReplySection(commentId);
+    }
+
+    function reportComment(commentId) {
+        // Silent - could implement later
+    }
+
+    // Post options
+    function togglePostOptions(postId) {
+        const menu = document.getElementById(`options-menu-${postId}`);
+        if (menu) {
+            menu.style.display = (menu.style.display === "none" || menu.style.display === "") 
+                ? "block" : "none";
+        }
+    }
+
+    // ðŸ†• REPORT POST FUNCTIONS
+    function reportPost(postId) {
+        openReportModal(postId);
+    }
+
+    function openReportModal(postId) {
+        document.getElementById('reportPostId').value = postId;
+        document.getElementById('reportModal').style.display = 'flex';
+    }
+
+    function closeReportModal() {
+        document.getElementById('reportModal').style.display = 'none';
+        document.getElementById('reportForm').reset();
+    }
+
+    function submitReport(event) {
+        event.preventDefault();
+        
+        const postId = document.getElementById('reportPostId').value;
+        const reason = document.getElementById('reportReason').value;
+        const description = document.getElementById('reportDescription').value;
+        
+        if (!reason) {
+            alert('Please select a reason for your report');
+            return;
+        }
+        
+        if (description.length < 10) {
+            alert('Please provide at least 10 characters in your description');
+            return;
+        }
+        
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+        submitBtn.disabled = true;
+        
+        fetch(`/report/post/${postId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason, description })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert('Thank you! Your report has been submitted and will be reviewed by our moderation team.');
+                closeReportModal();
+            } else {
+                alert(data.error || 'Failed to submit report. Please try again.');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        });
+    }
+
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('reportModal');
+        if (event.target === modal) {
+            closeReportModal();
+        }
+    });
+
+    // Close modal with ESC key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeReportModal();
+        }
+    });
+</script>

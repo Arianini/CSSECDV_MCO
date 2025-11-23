@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="/styles/login.css">
+    <script src="https://kit.fontawesome.com/2616052655.js" crossorigin="anonymous"></script>
+    <style>
+        /* Override input width to match button */
+        .login-container input[type="text"],
+        .login-container input[type="password"] {
+            width: 100% !important;
+            box-sizing: border-box;
+        }
+
+        /* Password container styling */
+        .password-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .password-container input {
+            width: 100% !important;
+            padding-right: 45px !important;
+        }
+
+        .password-container i {
+            position: absolute;
+            right: 12px;
+            top: 24px;
+            cursor: pointer;
+            color: #bbb;
+            font-size: 18px;
+        }
+
+        .password-container i:hover {
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <section class="login-container">
+            <h2>Login</h2>
+            <form id="login-form">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required placeholder="Enter your username">
+
+                <label for="password">Password:</label>
+                <div class="password-container">
+                    <input type="password" id="password" name="password" required placeholder="Enter your password">
+                    <i id="toggle-eye-password" class="fa-solid fa-eye-slash" onclick="togglePasswordVisibility()"></i>
+                </div>
+
+                <div class="remember-me">
+                    <input type="checkbox" id="remember" name="remember">
+                    <label for="remember">Remember me</label>
+                </div>
+
+                <button type="submit">Login</button>
+                <p class="error-message" id="login-error" style="color: red;"></p>
+                {{#if success}}
+                <p style="color: green; margin-top: 10px;">{{success}}</p>
+                {{/if}}
+                <p style="text-align: center; margin-top: 10px;">
+                    <a href="/forgot-password" style="color: #4a90e2; text-decoration: none;">Forgot Password?</a>
+                </p>
+                <p>Don't have an account? <a href="/register">Sign up here</a></p>
+            </form>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 TikTalk Archers</p>
+    </footer>
+
+    <script>
+        // Toggle password visibility
+        function togglePasswordVisibility() {
+            let passwordField = document.getElementById('password');
+            let eyeIcon = document.getElementById('toggle-eye-password');
+
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text'; 
+                eyeIcon.classList.remove('fa-eye-slash');  
+                eyeIcon.classList.add('fa-eye');  
+            } else {
+                passwordField.type = 'password'; 
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');  
+            }
+        }
+
+        document.getElementById("login-form").addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+
+            try {
+                const res = await fetch("/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const text = await res.text();
+
+                if (res.ok) {
+                    window.location.href = "/profile";
+                } else {
+                    document.getElementById("login-error").innerText = text;
+                }
+            } catch (error) {
+                document.getElementById("login-error").innerText = "An error occurred. Please try again.";
+            }
+        });
+    </script>
+</body>
+</html>

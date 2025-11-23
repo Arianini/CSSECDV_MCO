@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTalk - CCAPDEV</title>
+    <link rel="stylesheet" href="/styles/PageTemplate.css">
+    <link rel="stylesheet" href="/styles/Home.css">
+    <link rel="stylesheet" href="/styles/notification.css">
+    
+    <script src="https://kit.fontawesome.com/2616052655.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    {{#unless hideHeader}}
+    <header>
+        <div class="logo">
+            <img src="/styles/images/logo.jpg" alt="Logo">
+        </div>
+        <div class="search-bar">
+            <input type="text" placeholder="Search..." id="search-input">
+            <button id="search-btn">Search</button>
+        </div>
+        <div class="icons">
+            {{#if currentUser}}
+                <!-- Create Post - Only for users and managers, NOT admins -->
+                {{#unless (eq currentUser.role 'administrator')}}
+                    <button class="icon-btn" id="create-post-btn" title="Create Post">
+                        <i class="fa-solid fa-plus fa-2x"></i>
+                    </button>
+                {{/unless}}
+                
+                <!-- Profile Icon - ONLY for regular users (not managers or admins) -->
+                {{#if (eq currentUser.role 'user')}}
+                    <button class="icon-btn" id="profile-btn" title="Profile">
+                        <i class="fa-solid fa-user fa-2x"></i>
+                    </button>
+                {{/if}}
+                
+                <!-- ADMIN ICON - Only visible to administrators -->
+                {{#if (eq currentUser.role 'administrator')}}
+                    <a href="/admin" class="icon-btn" title="Admin Dashboard" style="text-decoration: none;">
+                        <i class="fa-solid fa-shield-halved fa-2x" style="color: #dc3545;"></i>
+                    </a>
+                {{/if}}
+                
+                <!-- MANAGER ICON - Only visible to managers -->
+                {{#if (eq currentUser.role 'manager')}}
+                    <a href="/manager" class="icon-btn" title="Manager Dashboard" style="text-decoration: none;">
+                        <i class="fa-solid fa-user-shield fa-2x" style="color: #ffc107;"></i>
+                    </a>
+                {{/if}}
+                
+                <button class="icon-btn" id="menu-btn" title="Menu">
+                    <i class="fa-solid fa-bars fa-2x"></i>
+                </button>
+            {{else}}
+                <a href="/login" class="icon-btn" style="text-decoration: none;" title="Login">
+                    <i class="fa-solid fa-right-to-bracket fa-2x"></i>
+                </a>
+            {{/if}}
+        </div>
+        
+        {{#if currentUser}}
+        <div id="menu-dropdown" class="menu-dropdown">
+            <ul>
+                <li style="padding: 15px; border-bottom: 2px solid #667eea;">
+                    <strong style="font-size: 16px;">{{currentUser.username}}</strong><br>
+                    <span style="color: #ffc107; font-size: 12px; text-transform: uppercase; font-weight: bold;">
+                        {{#if (eq currentUser.role 'administrator')}}
+                            👑 ADMINISTRATOR
+                        {{else if (eq currentUser.role 'manager')}}
+                            🛡️ MANAGER/MODERATOR
+                        {{else}}
+                            👤 USER
+                        {{/if}}
+                    </span>
+                </li>
+                
+                <!-- Admin-only menu items -->
+                {{#if (eq currentUser.role 'administrator')}}
+                    <li style="border-top: 1px solid #333; margin-top: 5px; padding-top: 10px; background: rgba(220, 53, 69, 0.1);">
+                        <a href="/admin" style="color: #dc3545; font-weight: bold;">
+                            <i class="fa-solid fa-shield-halved"></i> Admin Dashboard
+                        </a>
+                    </li>
+                    <li><a href="/admin/users"><i class="fa-solid fa-users-cog"></i> User Management</a></li>
+                    <li><a href="/manager/reports"><i class="fa-solid fa-flag"></i> Reports</a></li>
+                    <li><a href="/admin/logs"><i class="fa-solid fa-list"></i> Audit Logs</a></li>
+                    <li style="border-bottom: 1px solid #333; padding-bottom: 10px;">
+                        <a href="/home"><i class="fa-solid fa-eye"></i> View Public Feed</a>
+                    </li>
+                {{/if}}
+                
+                <!-- Manager menu items -->
+                {{#if (eq currentUser.role 'manager')}}
+                    <li style="border-top: 1px solid #333; margin-top: 5px; padding-top: 10px; background: rgba(255, 193, 7, 0.1);">
+                        <a href="/manager" style="color: #ffc107; font-weight: bold;">
+                            <i class="fa-solid fa-user-shield"></i> Manager Dashboard
+                        </a>
+                    </li>
+                    <li style="border-bottom: 1px solid #333; padding-bottom: 10px;">
+                        <a href="/manager/reports">
+                            <i class="fa-solid fa-flag"></i> Reports
+                        </a>
+                    </li>
+                {{/if}}
+                
+                <!-- Regular user menu items -->
+                {{#if (eq currentUser.role 'user')}}
+                    <li style="border-top: 1px solid #333; margin-top: 5px; padding-top: 10px;">
+                        <a href="/profile"><i class="fa-solid fa-user"></i> My Profile</a>
+                    </li>
+                {{/if}}
+                
+                <!-- Common menu items for all roles -->
+                <li><a href="/settings"><i class="fa-solid fa-gear"></i> Settings</a></li>
+                <li><a href="/change-password"><i class="fa-solid fa-key"></i> Change Password</a></li>
+                <li><a href="/about"><i class="fa-solid fa-info-circle"></i> About</a></li>
+                <li style="border-top: 1px solid #333; margin-top: 10px; padding-top: 10px;">
+                    <a href="/logout" style="color: #dc3545;">
+                        <i class="fa-solid fa-right-from-bracket"></i> Log Out
+                    </a>
+                </li>
+            </ul>
+        </div>
+        {{/if}}
+    </header>
+
+    <nav>
+        <ul>
+            {{#if currentUser}}
+                <!-- Only show Home for non-admins -->
+                {{#unless (eq currentUser.role 'administrator')}}
+                    <li><a href="/home">Home</a></li>
+                {{/unless}}
+            {{else}}
+                <li><a href="/">Home</a></li>
+                <li><a href="/login">Login</a></li>
+                <li><a href="/register">Register</a></li>
+            {{/if}}
+            <li><a href="/about">About</a></li>
+        </ul>
+    </nav>
+    {{/unless}}
+    
+    <main>
+        {{{body}}}
+    </main>
+
+    <footer>
+        <p>&copy; 2025 TikTalk Archers</p>
+    </footer>
+
+    <!-- ⭐ CRITICAL: Load notification system FIRST -->
+    <script src="/notification.js"></script>
+    
+    <!-- Then load main script.js -->
+    <script src="/script.js"></script>
+    
+    <!-- Include centralized menu and header functionality -->
+    <script src="/js/menu.js"></script>
+</body>
+</html>

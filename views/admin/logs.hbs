@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Logs - TikTalk</title>
+    <link rel="stylesheet" href="/styles/PageTemplate.css">
+    <style>
+        .admin-container {
+            max-width: 1600px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .filters {
+            background: #1f1f1f;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #444;
+            background: #333;
+            color: white;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn:hover {
+            background: #764ba2;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .logs-table {
+            width: 100%;
+            background: #1f1f1f;
+            border-radius: 10px;
+            overflow-x: auto;
+        }
+
+        .logs-table table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1200px;
+        }
+
+        .logs-table th {
+            background: #667eea;
+            padding: 12px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .logs-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #333;
+            font-size: 13px;
+        }
+
+        .logs-table tr:hover {
+            background: #2a2a2a;
+        }
+
+        .action-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .action-LOGIN { background: #28a745; }
+        .action-LOGOUT { background: #6c757d; }
+        .action-REGISTER { background: #17a2b8; }
+        .action-CREATE_POST { background: #007bff; }
+        .action-EDIT_POST { background: #ffc107; color: #000; }
+        .action-DELETE_POST { background: #dc3545; }
+        .action-CREATE_COMMENT { background: #20c997; }
+        .action-EDIT_COMMENT { background: #fd7e14; }
+        .action-DELETE_COMMENT { background: #e83e8c; }
+        .action-CREATE_USER { background: #6f42c1; }
+        .action-CHANGE_ROLE { background: #e056fd; }
+        .action-DELETE_USER { background: #dc3545; }
+        .action-CHANGE_PASSWORD { background: #fd7e14; }
+        .action-CHANGE_USERNAME { background: #20c997; }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .pagination a,
+        .pagination span {
+            padding: 8px 12px;
+            background: #1f1f1f;
+            border-radius: 5px;
+            text-decoration: none;
+            color: white;
+        }
+
+        .pagination a:hover {
+            background: #667eea;
+        }
+
+        .pagination .active {
+            background: #667eea;
+        }
+    </style>
+    <script src="https://kit.fontawesome.com/2616052655.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="header-row">
+            <h1>📋 Audit Logs</h1>
+            <div>
+                <a href="/admin/logs/export" class="btn btn-success">
+                    <i class="fa-solid fa-download"></i> Export CSV
+                </a>
+                <a href="/admin" class="btn">Back to Dashboard</a>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters">
+            <form method="GET" action="/admin/logs">
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label>Search Username</label>
+                        <input type="text" name="search" placeholder="Enter username..." value="{{search}}">
+                    </div>
+                    <div class="filter-group">
+                        <label>Action Type</label>
+                        <select name="action">
+                            <option value="">All Actions</option>
+                            {{#each actions}}
+                            <option value="{{this}}" {{#if (eq this ../selectedAction)}}selected{{/if}}>
+                                {{this}}
+                            </option>
+                            {{/each}}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Start Date</label>
+                        <input type="date" name="startDate" value="{{startDate}}">
+                    </div>
+                    <div class="filter-group">
+                        <label>End Date</label>
+                        <input type="date" name="endDate" value="{{endDate}}">
+                    </div>
+                </div>
+                <button type="submit" class="btn">
+                    <i class="fa-solid fa-filter"></i> Apply Filters
+                </button>
+                <a href="/admin/logs" class="btn" style="background: #6c757d;">
+                    <i class="fa-solid fa-times"></i> Clear
+                </a>
+            </form>
+        </div>
+
+        <!-- Logs Table -->
+        <div class="logs-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th>Action</th>
+                        <th>Target Type</th>
+                        <th>Target ID</th>
+                        <th>Details</th>
+                        <th>IP Address</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each logs}}
+                    <tr>
+                        <td>{{formatDate timestamp "YYYY-MM-DD HH:mm:ss"}}</td>
+                        <td>{{username}}</td>
+                        <td>
+                            {{#if user}}
+                                <span class="role-badge role-{{user.role}}">{{user.role}}</span>
+                            {{else}}
+                                -
+                            {{/if}}
+                        </td>
+                        <td>
+                            <span class="action-badge action-{{action}}">{{action}}</span>
+                        </td>
+                        <td>{{targetType}}</td>
+                        <td style="font-family: monospace; font-size: 11px;">
+                            {{#if targetId}}
+                                {{substring targetId 0 12}}...
+                            {{else}}
+                                -
+                            {{/if}}
+                        </td>
+                        <td>{{details}}</td>
+                        <td style="font-family: monospace; font-size: 11px;">{{ipAddress}}</td>
+                    </tr>
+                    {{else}}
+                    <tr>
+                        <td colspan="8" style="text-align: center;">No logs found</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {{#if (gt totalPages 1)}}
+        <div class="pagination">
+            {{#if (gt currentPage 1)}}
+                <a href="?page={{subtract currentPage 1}}{{#if search}}&search={{search}}{{/if}}{{#if selectedAction}}&action={{selectedAction}}{{/if}}{{#if startDate}}&startDate={{startDate}}{{/if}}{{#if endDate}}&endDate={{endDate}}{{/if}}">
+                    Previous
+                </a>
+            {{/if}}
+            
+            {{#each (range 1 (add totalPages 1))}}
+                {{#if (eq this ../currentPage)}}
+                    <span class="active">{{this}}</span>
+                {{else}}
+                    <a href="?page={{this}}{{#if ../search}}&search={{../search}}{{/if}}{{#if ../selectedAction}}&action={{../selectedAction}}{{/if}}{{#if ../startDate}}&startDate={{../startDate}}{{/if}}{{#if ../endDate}}&endDate={{../endDate}}{{/if}}">
+                        {{this}}
+                    </a>
+                {{/if}}
+            {{/each}}
+            
+            {{#if (lt currentPage totalPages)}}
+                <a href="?page={{add currentPage 1}}{{#if search}}&search={{search}}{{/if}}{{#if selectedAction}}&action={{selectedAction}}{{/if}}{{#if startDate}}&startDate={{startDate}}{{/if}}{{#if endDate}}&endDate={{endDate}}{{/if}}">
+                    Next
+                </a>
+            {{/if}}
+        </div>
+        {{/if}}
+    </div>
+
+    <footer>
+        <p>&copy; 2025 TikTalk Archers</p>
+    </footer>
+</body>
+</html>

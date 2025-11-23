@@ -1,0 +1,12 @@
+<div class="user-posts">
+    <h2>Your Posts</h2>
+    {{#if posts.length}}
+        <div class="post-feed">
+            {{#each posts}}
+                {{> post userProfile=../userProfile}}
+            {{/each}}
+        </div>
+    {{else}}
+        <p class="no-posts">No posts yet. Start sharing your thoughts!</p>
+    {{/if}}
+</div>

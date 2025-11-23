@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports Dashboard</title>
+    <link rel="stylesheet" href="/styles/PageTemplate.css">
+    <link rel="stylesheet" href="/manager-reports.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="reports-container">
+        <div class="reports-header">
+            <h1><i class="fas fa-flag"></i> Reports Dashboard</h1>
+            <div class="reports-stats">
+                <div class="stat-card pending">
+                    <i class="fas fa-clock"></i>
+                    <span class="stat-number">{{pendingCount}}</span>
+                    <span class="stat-label">Pending</span>
+                </div>
+                <div class="stat-card resolved">
+                    <i class="fas fa-check-circle"></i>
+                    <span class="stat-number">{{resolvedCount}}</span>
+                    <span class="stat-label">Resolved</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter/Sort Options -->
+        <div class="reports-filters">
+            <select id="statusFilter" onchange="filterReports()">
+                <option value="all">All Status</option>
+                <option value="pending" selected>Pending</option>
+                <option value="reviewed">Reviewed</option>
+                <option value="resolved">Resolved</option>
+                <option value="dismissed">Dismissed</option>
+                <option value="escalated">Escalated</option>
+            </select>
+            
+            <select id="reasonFilter" onchange="filterReports()">
+                <option value="all">All Reasons</option>
+                <option value="spam">Spam</option>
+                <option value="harassment">Harassment</option>
+                <option value="inappropriate">Inappropriate Content</option>
+                <option value="misinformation">Misinformation</option>
+                <option value="other">Other</option>
+            </select>
+        </div>
+
+        <!-- Reports List -->
+        <div class="reports-list">
+            {{#if reports}}
+                {{#each reports}}
+                <div class="report-card" data-status="{{status}}" data-reason="{{reason}}">
+                    <div class="report-header">
+                        <div class="report-info">
+                            <h3>Report #{{_id}}</h3>
+                            <div class="report-meta">
+                                <span class="reporter">
+                                    <i class="fas fa-user"></i> 
+                                    Reported by: <strong>{{reportedBy.username}}</strong>
+                                </span>
+                                <span class="post-author">
+                                    <i class="fas fa-user-edit"></i> 
+                                    Post by: <strong>{{post.user.username}}</strong>
+                                </span>
+                                <span class="report-date">
+                                    <i class="fas fa-calendar"></i> 
+                                    {{createdAt}}
+                                </span>
+                            </div>
+                        </div>
+                        <span class="status-badge status-{{status}}">{{status}}</span>
+                    </div>
+                    
+                    <div class="report-reason">
+                        <strong><i class="fas fa-exclamation-triangle"></i> Reason:</strong> 
+                        <span class="reason-tag reason-{{reason}}">{{reason}}</span>
+                    </div>
+                    
+                    <div class="report-description">
+                        <strong>Description:</strong>
+                        <p>{{description}}</p>
+                    </div>
+                    
+                    <!-- Post Preview with View Button -->
+                    <div class="post-preview">
+                        <div class="preview-label">
+                            <i class="fas fa-image"></i> Reported Post
+                            <button class="btn-view-post" onclick="viewFullPost('{{post._id}}', '{{post.user.username}}', '{{post.caption}}', '{{post.imageUrl}}', '{{post.postTag}}', '{{post.createdAt}}')">
+                                <i class="fas fa-expand"></i> View Full Post
+                            </button>
+                        </div>
+                        <div class="preview-content">
+                            {{#if post.imageUrl}}
+                            <img src="{{post.imageUrl}}" alt="Post image" class="preview-image">
+                            {{/if}}
+                            <div class="preview-text">
+                                <p><strong>Caption:</strong> {{post.caption}}</p>
+                                {{#if post.postTag}}
+                                <p><strong>Tag:</strong> <span class="post-tag">{{post.postTag}}</span></p>
+                                {{/if}}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Actions (only for pending/escalated reports) -->
+                    {{#if (or (eq status 'pending') (eq status 'escalated'))}}
+                    <div class="action-buttons">
+                        <button class="btn btn-hide" onclick="handleReport('{{_id}}', 'hide_post')">
+                            <i class="fas fa-eye-slash"></i> Hide Post
+                        </button>
+                        <button class="btn btn-delete" onclick="handleReport('{{_id}}', 'delete_post')">
+                            <i class="fas fa-trash"></i> Delete Post
+                        </button>
+                        <button class="btn btn-warn" onclick="handleReport('{{_id}}', 'warn_user')">
+                            <i class="fas fa-exclamation"></i> Warn User
+                        </button>
+                        <button class="btn btn-restrict" onclick="handleReport('{{_id}}', 'restrict_user')">
+                            <i class="fas fa-ban"></i> Restrict User (48h)
+                        </button>
+                        <button class="btn btn-dismiss" onclick="handleReport('{{_id}}', 'dismiss')">
+                            <i class="fas fa-times"></i> Dismiss
+                        </button>
+                        {{#if (eq ../user.role 'manager')}}
+                        <button class="btn btn-escalate" onclick="escalateReport('{{_id}}')">
+                            <i class="fas fa-arrow-up"></i> Escalate to Admin
+                        </button>
+                        {{/if}}
+                    </div>
+                    {{else}}
+                    <!-- Resolved info -->
+                    <div class="resolved-info">
+                        <p><strong><i class="fas fa-user-shield"></i> Handled by:</strong> {{handledBy.username}}</p>
+                        {{#if adminNotes}}
+                        <p><strong><i class="fas fa-sticky-note"></i> Notes:</strong> {{adminNotes}}</p>
+                        {{/if}}
+                        <p><strong><i class="fas fa-check"></i> Resolved at:</strong> {{resolvedAt}}</p>
+                    </div>
+                    {{/if}}
+                </div>
+                {{/each}}
+            {{else}}
+                <div class="no-reports">
+                    <i class="fas fa-inbox"></i>
+                    <h2>No Reports</h2>
+                    <p>There are no reports to display at this time.</p>
+                </div>
+            {{/if}}
+        </div>
+    </div>
+    
+    <!-- Post Viewing Modal (Facebook-style) -->
+    <div id="postViewModal" class="post-modal">
+        <div class="post-modal-overlay" onclick="closePostModal()"></div>
+        <div class="post-modal-content">
+            <button class="post-modal-close" onclick="closePostModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <div class="post-modal-body">
+                <!-- Image Section (if exists) -->
+                <div id="modalImageSection" class="modal-image-section">
+                    <img id="modalPostImage" src="" alt="Post image">
+                </div>
+                
+                <!-- Post Details Section -->
+                <div class="modal-details-section">
+                    <!-- Post Header -->
+                    <div class="modal-post-header">
+                        <div class="modal-user-info">
+                            <div class="modal-user-avatar">
+                                <i class="fas fa-user-circle"></i>
+                            </div>
+                            <div class="modal-user-details">
+                                <h3 id="modalUsername"></h3>
+                                <span id="modalTimestamp" class="modal-timestamp"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Post Content -->
+                    <div class="modal-post-content">
+                        <p id="modalCaption"></p>
+                        <div id="modalTag" class="modal-tag"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/manager-reports.js"></script>
+</body>
+</html>
