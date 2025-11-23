@@ -10,7 +10,7 @@
     
     <script src="https://kit.fontawesome.com/2616052655.js" crossorigin="anonymous"></script>
 </head>
-<body>
+<body {{#if currentUser}}data-user-role="{{currentUser.role}}"{{/if}}>
     {{#unless hideHeader}}
     <header>
         <div class="logo">
@@ -153,6 +153,13 @@
 
     <!-- ⭐ CRITICAL: Load notification system FIRST -->
     <script src="/notification.js"></script>
+    
+    <!-- Load restriction checker for users -->
+    {{#if currentUser}}
+        {{#if (eq currentUser.role 'user')}}
+            <script src="/restriction-checker.js"></script>
+        {{/if}}
+    {{/if}}
     
     <!-- Then load main script.js -->
     <script src="/script.js"></script>

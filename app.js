@@ -232,6 +232,19 @@ server.render = util.promisify(server.render);
 // Serve Static Files
 server.use(express.static(path.join(__dirname, 'public')));
 
+// Serve notification.js and script.js from root
+server.get('/notification.js', (req, res) => {
+    res.sendFile(path.join(__dirname, 'notification.js'));
+});
+
+server.get('/script.js', (req, res) => {
+    res.sendFile(path.join(__dirname, 'script.js'));
+});
+
+server.get('/restriction-checker.js', (req, res) => {
+    res.sendFile(path.join(__dirname, 'restriction-checker.js'));
+});
+
 // ============================================
 // PUBLIC ROUTES
 // ============================================

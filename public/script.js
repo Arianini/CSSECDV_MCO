@@ -79,6 +79,7 @@ async function saveEditPost(postId) {
 }
 
 async function deletePost(postId) {
+    console.log('🔴 deletePost called for:', postId);
     
     // Close the menu immediately
     const menu = document.getElementById(`options-menu-${postId}`);
@@ -86,24 +87,27 @@ async function deletePost(postId) {
         menu.style.display = 'none';
     }
     
+    console.log('🟡 Showing confirmation dialog...');
     
-    const confirmed = await showConfirm(
-        "This action cannot be undone.",
-        "Delete this post?"
-    );
-    
-    
-    if (!confirmed) {
-        return;
-    }
-
-
     try {
+        const confirmed = await showConfirm(
+            "This action cannot be undone.",
+            "Delete this post?"
+        );
+        
+        console.log('🟢 User confirmed:', confirmed);
+        
+        if (!confirmed) {
+            console.log('🔵 User cancelled deletion');
+            return;
+        }
+
+        console.log('🟠 Proceeding with deletion...');
+        
         const response = await fetch(`/delete-post/${postId}`, {
             method: "DELETE",
             headers: { "Content-Type": "application/json" },
         });
-
 
         if (response.ok) {
             const postElement = document.getElementById(`post-${postId}`);
@@ -115,6 +119,7 @@ async function deletePost(postId) {
             showError("Failed to delete post.");
         }
     } catch (error) {
+        console.error('❌ Error in deletePost:', error);
         showError("An error occurred while deleting the post.");
     }
 }
@@ -819,3 +824,80 @@ async function dislikeReply(postId, commentId, replyId) {
         showError("Failed to dislike reply.");
     }
 }
+// ============================================
+// RESTRICTION CHECKER - Auto-detect when user gets restricted
+// ============================================
+
+let restrictionCheckInterval = null;
+
+function startRestrictionCheck() {
+    // Only check for regular users (not admins/managers)
+    const userRole = document.body.dataset.userRole;
+    if (userRole === 'user') {
+        // Check every 10 seconds
+        restrictionCheckInterval = setInterval(checkRestrictionStatus, 10000);
+        console.log('✅ Restriction checker started (checking every 10 seconds)');
+    }
+}
+
+async function checkRestrictionStatus() {
+    try {
+        const response = await fetch('/api/check-restriction', {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (!response.ok) {
+            console.error('Failed to check restriction status');
+            return;
+        }
+        
+        const data = await response.json();
+        
+        if (data.restricted) {
+            // User is now restricted, show notification and redirect
+            clearInterval(restrictionCheckInterval);
+            
+            let message = '';
+            if (data.restrictionType === 'permanent_ban') {
+                message = 'Your account has been permanently banned. ';
+            } else {
+                const endDate = new Date(data.endDate);
+                message = `Your account has been temporarily restricted until ${endDate.toLocaleString()}. `;
+            }
+            
+            if (data.reason) {
+                message += `Reason: ${data.reason}. `;
+            }
+            
+            message += 'You will be logged out now.';
+            
+            showError(message, 'Account Restricted', () => {
+                window.location.href = '/logout';
+            });
+            
+            // Force redirect after 3 seconds even if they don't click
+            setTimeout(() => {
+                window.location.href = '/logout';
+            }, 3000);
+        }
+    } catch (error) {
+        console.error('Error checking restriction status:', error);
+    }
+}
+
+// Start checking when page loads
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startRestrictionCheck);
+} else {
+    startRestrictionCheck();
+}
+
+// Stop checking when page unloads
+window.addEventListener('beforeunload', () => {
+    if (restrictionCheckInterval) {
+        clearInterval(restrictionCheckInterval);
+    }
+});
+
+console.log('✅ Restriction checker loaded');
