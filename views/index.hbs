@@ -33,12 +33,12 @@ setTimeout(function() {
     <div class="left-block">
         <h1>Find Your Community!</h1>
         <div class="community-list">
-            <a href="/posts/Gaming">ðŸŽ® Gaming</a>
-            <a href="/posts/Food">ðŸ” Food</a>
-            <a href="/posts/Coffee">â˜• Coffee</a>
-            <a href="/posts/Baking">ðŸ° Baking</a>
-            <a href="/posts/Travel">âœˆï¸ Travel</a>
-            <a href="/posts/Technology">ðŸ’» Technology</a>
+            <a href="/posts/Gaming">Ã°Å¸Å½Â® Gaming</a>
+            <a href="/posts/Food">Ã°Å¸Ââ€ Food</a>
+            <a href="/posts/Coffee">Ã¢Ëœâ€¢ Coffee</a>
+            <a href="/posts/Baking">Ã°Å¸ÂÂ° Baking</a>
+            <a href="/posts/Travel">Ã¢Å“Ë†Ã¯Â¸Â Travel</a>
+            <a href="/posts/Technology">Ã°Å¸â€™Â» Technology</a>
         </div>
     </div>
 
@@ -70,29 +70,29 @@ setTimeout(function() {
             <!-- Post Tag Dropdown -->
             <select id="post-tag" required style="width: 100%; padding: 10px; margin: 10px 0; background: #3a3b3c; border: none; color: white; border-radius: 5px;">
                 <option value="">-- Select Category --</option>
-                <option value="Food">ðŸ” Food</option>
-                <option value="Coffee">â˜• Coffee</option>
-                <option value="Baking">ðŸ° Baking</option>
-                <option value="Travel">âœˆï¸ Travel</option>
-                <option value="Gaming">ðŸŽ® Gaming</option>
-                <option value="Technology">ðŸ’» Technology</option>
-                <option value="Sports">âš½ Sports</option>
-                <option value="Music">ðŸŽµ Music</option>
-                <option value="Art">ðŸŽ¨ Art</option>
-                <option value="General">ðŸ’¬ General</option>
+                <option value="Food">🍔 Food</option>
+                <option value="Coffee">☕ Coffee</option>
+                <option value="Baking">🍰 Baking</option>
+                <option value="Travel">✈️ Travel</option>
+                <option value="Gaming">🎮 Gaming</option>
+                <option value="Technology">💻 Technology</option>
+                <option value="Sports">⚽ Sports</option>
+                <option value="Music">🎵 Music</option>
+                <option value="Art">🎨 Art</option>
+                <option value="General">💬 General</option>
             </select>
             
             <!-- Emoji Picker -->
             <div class="emoji-picker">
-                <span onclick="addEmoji('ðŸ˜€')">ðŸ˜€</span>
-                <span onclick="addEmoji('â¤ï¸')">â¤ï¸</span>
-                <span onclick="addEmoji('ðŸ˜‚')">ðŸ˜‚</span>
-                <span onclick="addEmoji('ðŸ˜¢')">ðŸ˜¢</span>
-                <span onclick="addEmoji('ðŸ˜¡')">ðŸ˜¡</span>
+                <span onclick="addEmoji('😀')">😀</span>
+                <span onclick="addEmoji('❤️')">❤️</span>
+                <span onclick="addEmoji('😂')">😂</span>
+                <span onclick="addEmoji('😢')">😢</span>
+                <span onclick="addEmoji('😡')">😡</span>
             </div>
 
             <!-- Image Upload -->
-            <label for="post-image" class="custom-upload-btn">ðŸ“· Upload Image</label>
+            <label for="post-image" class="custom-upload-btn">📷 Upload Image</label>
             <input type="file" id="post-image" accept="image/*" onchange="previewImage(event)" style="display: none;">
 
             <!-- Image Preview -->
@@ -107,7 +107,7 @@ setTimeout(function() {
 </div>
 
 <!-- ============================================
-     ðŸ†• REPORT MODAL - ADD THIS SECTION
+     Ã°Å¸â€ â€¢ REPORT MODAL - ADD THIS SECTION
      ============================================ -->
 <div id="reportModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px);">
     <div class="report-modal-content" style="position: relative; background: #1f1f1f; width: 90%; max-width: 500px; margin: 100px auto; border-radius: 15px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5); animation: slideDown 0.3s ease-out;">
@@ -371,7 +371,7 @@ setTimeout(function() {
         }
     }
 
-    // ðŸ†• REPORT POST FUNCTIONS
+    // Ã°Å¸â€ â€¢ REPORT POST FUNCTIONS
     function reportPost(postId) {
         openReportModal(postId);
     }

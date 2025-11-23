@@ -148,11 +148,11 @@
                 <div class="password-requirements">
                     Password must contain:
                     <ul>
-                        <li id="req-length">âœ— At least 8 characters</li>
-                        <li id="req-uppercase">âœ— One uppercase letter</li>
-                        <li id="req-lowercase">âœ— One lowercase letter</li>
-                        <li id="req-number">âœ— One number</li>
-                        <li id="req-special">âœ— One special character (!@#$%^&*)</li>
+                        <li id="req-length">❌ At least 8 characters</li>
+                        <li id="req-uppercase">❌ One uppercase letter</li>
+                        <li id="req-lowercase">❌ One lowercase letter</li>
+                        <li id="req-number">❌ One number</li>
+                        <li id="req-special">❌ One special character (!@#$%^&*)</li>
                     </ul>
                 </div>
 
@@ -259,11 +259,11 @@
             if (isValid) {
                 elem.classList.add('valid');
                 elem.classList.remove('invalid');
-                elem.textContent = elem.textContent.replace('âœ—', 'âœ“');
+                elem.textContent = elem.textContent.replace('❌', '✓');
             } else {
                 elem.classList.add('invalid');
                 elem.classList.remove('valid');
-                elem.textContent = elem.textContent.replace('âœ“', 'âœ—');
+                elem.textContent = elem.textContent.replace('✓', '❌');
             }
         }
 

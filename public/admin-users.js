@@ -73,17 +73,44 @@ function validatePassword(password) {
 
 // Ban user
 function banUser(userId, username) {
-    const reason = prompt(`Enter reason for banning ${username}:`);
-    if (reason === null) return; // User cancelled
+    const modal = document.createElement('div');
+    modal.className = 'modal show';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-ban"></i> Ban User: ${username}</h2>
+                <span class="close" onclick="this.closest('.modal').remove()">&times;</span>
+            </div>
+            <div style="padding: 25px;">
+                <label style="display: block; color: #007BFF; margin-bottom: 10px; font-weight: bold;">
+                    <i class="fas fa-exclamation-triangle"></i> Reason for Ban
+                </label>
+                <textarea id="banReason" placeholder="Enter reason for banning this user..." style="width: 100%; min-height: 100px; padding: 10px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 5px; margin-bottom: 15px;"></textarea>
+                <div style="background: #2a1a1a; padding: 15px; border-radius: 5px; border-left: 4px solid #f44336; margin-bottom: 15px;">
+                    <p style="color: #ff6b6b; margin: 0; font-size: 14px;">
+                        <i class="fas fa-exclamation-circle"></i> <strong>Warning:</strong> This will permanently ban ${username} from the platform.
+                    </p>
+                </div>
+                <button class="btn btn-danger btn-full" onclick="confirmBan('${userId}', '${username}')">
+                    <i class="fas fa-ban"></i> Confirm Permanent Ban
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// Confirm ban action
+function confirmBan(userId, username) {
+    const reason = document.getElementById('banReason').value.trim();
     
-    if (!reason.trim()) {
-        alert('Please provide a reason for the ban');
+    if (!reason) {
+        showNotification('Error', 'Please provide a reason for the ban', 'error');
         return;
     }
     
-    if (!confirm(`Are you sure you want to permanently ban ${username}?`)) {
-        return;
-    }
+    // Close the modal
+    document.querySelector('.modal.show').remove();
     
     fetch(`/admin/users/${userId}/ban`, {
         method: 'POST',
@@ -107,9 +134,32 @@ function banUser(userId, username) {
 
 // Unban user
 function unbanUser(userId, username) {
-    if (!confirm(`Are you sure you want to unban ${username}?`)) {
-        return;
-    }
+    const modal = document.createElement('div');
+    modal.className = 'modal show';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-user-check"></i> Unban User</h2>
+                <span class="close" onclick="this.closest('.modal').remove()">&times;</span>
+            </div>
+            <div style="padding: 25px;">
+                <div style="background: #1a2a1a; padding: 15px; border-radius: 5px; border-left: 4px solid #4CAF50; margin-bottom: 15px;">
+                    <p style="color: #6bff6b; margin: 0; font-size: 14px;">
+                        <i class="fas fa-info-circle"></i> This will restore access for <strong>${username}</strong>
+                    </p>
+                </div>
+                <button class="btn btn-success btn-full" onclick="confirmUnban('${userId}', '${username}')">
+                    <i class="fas fa-check"></i> Confirm Unban
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// Confirm unban action
+function confirmUnban(userId, username) {
+    document.querySelector('.modal.show').remove();
     
     fetch(`/admin/users/${userId}/unban`, {
         method: 'POST',
@@ -195,15 +245,46 @@ function submitRoleChange(userId, username) {
 
 // Delete user
 function deleteUser(userId, username) {
-    if (!confirm(`Are you sure you want to DELETE the account of ${username}? This action cannot be undone!`)) {
+    const modal = document.createElement('div');
+    modal.className = 'modal show';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-trash-alt"></i> Delete User Account</h2>
+                <span class="close" onclick="this.closest('.modal').remove()">&times;</span>
+            </div>
+            <div style="padding: 25px;">
+                <div style="background: #3a1a1a; padding: 15px; border-radius: 5px; border-left: 4px solid #ff4444; margin-bottom: 15px;">
+                    <p style="color: #ff6b6b; margin: 0 0 10px 0; font-size: 14px;">
+                        <i class="fas fa-exclamation-triangle"></i> <strong>CRITICAL WARNING:</strong>
+                    </p>
+                    <p style="color: #ffaaaa; margin: 0; font-size: 13px;">
+                        This will permanently delete <strong>${username}</strong>'s account and ALL associated data. This action cannot be undone!
+                    </p>
+                </div>
+                <label style="display: block; color: #007BFF; margin-bottom: 10px; font-weight: bold;">
+                    <i class="fas fa-keyboard"></i> Type username to confirm
+                </label>
+                <input type="text" id="deleteConfirmUsername" placeholder="Type ${username}" style="width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 5px; margin-bottom: 15px;">
+                <button class="btn btn-danger btn-full" onclick="confirmDelete('${userId}', '${username}')">
+                    <i class="fas fa-trash-alt"></i> Permanently Delete Account
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// Confirm delete action
+function confirmDelete(userId, username) {
+    const confirmUsername = document.getElementById('deleteConfirmUsername').value;
+    
+    if (confirmUsername !== username) {
+        showNotification('Error', 'Username did not match. Deletion cancelled.', 'error');
         return;
     }
     
-    const finalConfirm = prompt(`Type "${username}" to confirm deletion:`);
-    if (finalConfirm !== username) {
-        alert('Username did not match. Deletion cancelled.');
-        return;
-    }
+    document.querySelector('.modal.show').remove();
     
     fetch(`/admin/users/${userId}`, {
         method: 'DELETE',
@@ -231,7 +312,7 @@ function showNotification(title, message, type) {
     notification.innerHTML = `
         <div class="notification-header">
             <strong>${title}</strong>
-            <button onclick="this.parentElement.parentElement.remove()">×</button>
+            <button onclick="this.parentElement.parentElement.remove()">Ã—</button>
         </div>
         <div class="notification-body">${message}</div>
     `;
@@ -319,6 +400,48 @@ notificationStyles.textContent = `
     .notification-body {
         color: #ddd;
         font-size: 14px;
+    }
+    
+    /* Button styles for modals */
+    .btn {
+        padding: 12px 20px;
+        border: none;
+        border-radius: 5px;
+        font-size: 14px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-full {
+        width: 100%;
+    }
+    
+    .btn-primary {
+        background: #007BFF;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: #0056b3;
+    }
+    
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        background: #a71d2a;
+    }
+    
+    .btn-success {
+        background: #28a745;
+        color: white;
+    }
+    
+    .btn-success:hover {
+        background: #1e7e34;
     }
 `;
 document.head.appendChild(notificationStyles);

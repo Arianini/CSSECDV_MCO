@@ -358,7 +358,7 @@ server.get('/register', (req, res) => {
 });
 
 server.post('/register', async (req, res) => {
-    const { username, password, securityAnswer, securityQuestion } = req.body;
+    const { username, password, confirmPassword, securityAnswer, securityQuestion } = req.body;
 
     try {
         // Basic validation
@@ -903,7 +903,7 @@ server.get('/profile/posts', isAuthenticated, async (req, res) => {
         });
 
     } catch (err) {
-        console.error('ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ Error fetching user posts for profile:', err);
+        console.error('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Error fetching user posts for profile:', err);
         res.status(500).send('Internal Server Error');
     }
 });
@@ -926,7 +926,7 @@ server.get('/profile/likes', isAuthenticated, async (req, res) => {
 
         res.render('profile/likes', { layout: false, posts: likedPosts, userProfile: user });
     } catch (err) {
-        console.error("ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ Error loading liked posts:", err);
+        console.error("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Error loading liked posts:", err);
         res.status(500).send("Internal Server Error");
     }
 });
@@ -949,7 +949,7 @@ server.get('/profile/dislikes', isAuthenticated, async (req, res) => {
 
         res.render('profile/dislikes', { layout: false, posts: dislikedPosts, userProfile: user });
     } catch (err) {
-        console.error("ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ Error loading disliked posts:", err);
+        console.error("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Error loading disliked posts:", err);
         res.status(500).send("Internal Server Error");
     }
 });
@@ -998,7 +998,7 @@ server.post('/settings', isAuthenticated, async (req, res) => {
         if (!newUsername || newUsername.trim().length === 0) {
             await logActivity(req.session.userId, 'VALIDATION_FAILED', 'USERNAME_CHANGE', 
                             req.session.userId, 'Username change failed: Empty username', getClientIp(req));
-            return res.status(400).send("ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã‚Â¡Ãƒâ€šÃ‚Â  Username cannot be empty!");
+            return res.status(400).send("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  Username cannot be empty!");
         }
 
         // Case-insensitive check for existing username
@@ -1009,12 +1009,12 @@ server.post('/settings', isAuthenticated, async (req, res) => {
             // 2.4.4 - Log input validation failure
             await logActivity(req.session.userId, 'VALIDATION_FAILED', 'USERNAME_CHANGE', 
                             req.session.userId, 'Username change failed: Username already exists', getClientIp(req));
-            return res.status(400).send("ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã‚Â¡Ãƒâ€šÃ‚Â  Username already exists!");
+            return res.status(400).send("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  Username already exists!");
         }
 
         const user = await User.findById(req.session.userId);
         if (!user) {
-            return res.status(400).send("ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ User not found!");
+            return res.status(400).send("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ User not found!");
         }
 
         const oldUsername = user.username;
@@ -1162,7 +1162,7 @@ server.post('/create-post', isAuthenticated, requireNotRestricted, upload.single
 
         res.json({ success: true, message: "Post created successfully!" });
     } catch (err) {
-        console.error("ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã‚Â¡Ãƒâ€šÃ‚Â¨ Error creating post:", err);
+        console.error("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¨ Error creating post:", err);
         res.status(500).json({ error: "Internal Server Error" });
     }
 });

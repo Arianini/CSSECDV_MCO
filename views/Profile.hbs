@@ -73,8 +73,8 @@
     
             postCaption.innerHTML = `
                 <textarea id="edit-caption-${postId}" class="edit-caption">${originalText}</textarea>
-                <button onclick="saveEditPost('${postId}')">💾 Save</button>
-                <button onclick="cancelEditPost('${postId}', \`${originalText}\`)">❌ Cancel</button>
+                <button onclick="saveEditPost('${postId}')">ðŸ’¾ Save</button>
+                <button onclick="cancelEditPost('${postId}', \`${originalText}\`)">âŒ Cancel</button>
                 `;
         }
 
@@ -97,7 +97,7 @@
                     document.getElementById(`post-caption-${postId}`).innerHTML = `
                         <p id="caption-text-${postId}">${newCaption} (Edited)</p>
                         <textarea id="edit-caption-${postId}" class="edit-caption" style="display: none;">${newCaption}</textarea>
-                        <button id="save-edit-btn-${postId}" style="display: none;" onclick="saveEditPost('${postId}')">💾 Save</button>
+                        <button id="save-edit-btn-${postId}" style="display: none;" onclick="saveEditPost('${postId}')">ðŸ’¾ Save</button>
                     `;
                 } else {
                     alert(data.error);
@@ -146,7 +146,7 @@
             
             <!-- Pencil Icon -->
             <div class="edit-icon-container" onclick="toggleProfilePicMenu()">
-                ✏
+                âœ
             </div>
 
             <!-- Profile Picture Update Menu -->
@@ -195,6 +195,21 @@
                     </div>
                     <textarea id="post-caption" placeholder="What's on your mind?"></textarea>
 
+                    <!-- Post Tag Dropdown -->
+                    <select id="post-tag" required style="width: 100%; padding: 10px; margin: 10px 0; background: #3a3b3c; border: none; color: white; border-radius: 5px;">
+                        <option value="">-- Select Category --</option>
+                        <option value="Food">🍔 Food</option>
+                        <option value="Coffee">☕ Coffee</option>
+                        <option value="Baking">🍰 Baking</option>
+                        <option value="Travel">✈️ Travel</option>
+                        <option value="Gaming">🎮 Gaming</option>
+                        <option value="Technology">💻 Technology</option>
+                        <option value="Sports">⚽ Sports</option>
+                        <option value="Music">🎵 Music</option>
+                        <option value="Art">🎨 Art</option>
+                        <option value="General">💬 General</option>
+                    </select>
+
                     <!-- Emoji Picker -->
                     <div class="emoji-picker">
                         <span onclick="addEmoji('😀')">😀</span>
@@ -213,7 +228,7 @@
                         <img id="image-preview" src="" alt="Image Preview" style="max-width: 100%; display: block;">
                     </div>
                     <!-- Post Button -->
-                    <button class="post-btn" onclick="submitPost()">Post</button>
+                    <button class="post-btn" id="submit-post-btn">Post</button>
                 </div>
             </div>
         </div>

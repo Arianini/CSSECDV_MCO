@@ -74,36 +74,29 @@ async function saveEditPost(postId) {
             showError("Failed to update post.");
         }
     } catch (error) {
-        console.error("Error updating post:", error);
         showError("An error occurred while updating the post.");
     }
 }
 
 async function deletePost(postId) {
-    console.log('ðŸ”´ DELETE BUTTON CLICKED! Post ID:', postId);
     
     // Close the menu immediately
     const menu = document.getElementById(`options-menu-${postId}`);
     if (menu) {
-        console.log('âœ… Menu found and closing');
         menu.style.display = 'none';
     }
     
-    console.log('ðŸ”µ About to call showConfirm...');
     
     const confirmed = await showConfirm(
         "This action cannot be undone.",
         "Delete this post?"
     );
     
-    console.log('ðŸŸ¢ User response:', confirmed);
     
     if (!confirmed) {
-        console.log('âŒ User cancelled delete');
         return;
     }
 
-    console.log('ðŸš€ User confirmed! Sending DELETE request...');
 
     try {
         const response = await fetch(`/delete-post/${postId}`, {
@@ -111,23 +104,17 @@ async function deletePost(postId) {
             headers: { "Content-Type": "application/json" },
         });
 
-        console.log('ðŸ“¡ Response received. Status:', response.status);
 
         if (response.ok) {
-            console.log('âœ… Server said OK');
             const postElement = document.getElementById(`post-${postId}`);
             if (postElement) {
-                console.log('âœ… Post element found, removing from DOM');
                 postElement.remove();
                 showSuccess("Post deleted successfully!");
-                console.log('âœ… Delete complete!');
             }
         } else {
-            console.log('âŒ Server returned error');
             showError("Failed to delete post.");
         }
     } catch (error) {
-        console.error("ðŸ’¥ ERROR:", error);
         showError("An error occurred while deleting the post.");
     }
 }
@@ -137,7 +124,6 @@ document.addEventListener('click', function(e) {
     if (e.target.classList.contains('delete-post-btn')) {
         e.stopPropagation();
         const postId = e.target.getAttribute('data-post-id');
-        console.log('ðŸ”´ DELETE CLICKED via event delegation! Post ID:', postId);
         deletePost(postId);
     }
     
@@ -145,7 +131,6 @@ document.addEventListener('click', function(e) {
     if (e.target.classList.contains('edit-post-btn')) {
         e.stopPropagation();
         const postId = e.target.getAttribute('data-post-id');
-        console.log('âœï¸ EDIT CLICKED via event delegation! Post ID:', postId);
         editPost(postId);
     }
     
@@ -153,7 +138,6 @@ document.addEventListener('click', function(e) {
     if (e.target.classList.contains('report-post-btn')) {
         e.stopPropagation();
         const postId = e.target.getAttribute('data-post-id');
-        console.log('âš ï¸ REPORT CLICKED via event delegation! Post ID:', postId);
         reportPost(postId);
     }
 });
@@ -191,45 +175,35 @@ document.getElementById("post-image").addEventListener("change", function (event
     }
 });
 
-console.log('ðŸŸ¦ Setting up submit-post-btn listener');
 
 // Wait for DOM to be ready
 const setupSubmitButton = () => {
     const submitBtn = document.getElementById("submit-post-btn");
     if (!submitBtn) {
-        console.error('âŒ submit-post-btn not found!');
         return;
     }
     
-    console.log('âœ… submit-post-btn found');
 
     submitBtn.addEventListener("click", async function (e) {
         e.preventDefault(); // Prevent form submission
         e.stopPropagation(); // Stop event bubbling
         
-        console.log('ðŸŸ¦ Submit button clicked!');
         
         const caption = document.getElementById("post-caption").value.trim();
         const postTag = document.getElementById("post-tag").value.trim(); 
         const imageInput = document.getElementById("post-image").files[0];
 
-        console.log('ðŸ“ Caption:', caption);
-        console.log('ðŸ·ï¸ Tag:', postTag);
-        console.log('ðŸ–¼ï¸ Image:', imageInput);
 
         if (!caption && !imageInput) {
-            console.log('âŒ Validation failed: no caption and no image');
             showError("Post must contain either a caption or an image.");
             return;
         }
 
         if (!postTag) {
-            console.log('âŒ Validation failed: no tag');
             showError("Please enter a post tag.");
             return;
         }
 
-        console.log('âœ… Validation passed, creating post...');
 
         const formData = new FormData();
         formData.append("caption", caption);
@@ -247,14 +221,11 @@ const setupSubmitButton = () => {
             const result = await response.json();
 
             if (result.success) {
-                console.log('âœ… Post created successfully!');
                 location.reload(); // Just reload immediately
             } else {
-                console.log('âŒ Server error:', result.error);
                 showError(result.error || "Failed to create post.");
             }
         } catch (error) {
-            console.error("ðŸ’¥ Error creating post:", error);
             showError("An error occurred while creating the post.");
         }
     });
@@ -352,7 +323,6 @@ async function toggleLike(type, id) {
             likeBtn?.classList.remove("active");
         }
     } catch (error) {
-        console.error("Error toggling like:", error);
         showError("Failed to like.");
     }
 }
@@ -386,7 +356,6 @@ async function toggleDislike(type, id) {
             dislikeBtn?.classList.remove("active");
         }
     } catch (error) {
-        console.error("Error toggling dislike:", error);
         showError("Failed to dislike.");
     }
 }
@@ -462,7 +431,6 @@ async function addComment(postId) {
             showError(data.error || "Failed to add comment.");
         }
     } catch (error) {
-        console.error("Error adding comment:", error);
         showError("An error occurred while adding the comment.");
     }
 }
@@ -494,7 +462,6 @@ async function deleteComment(postId, commentId) {
             showError(data.error || "Failed to delete comment.");
         }
     } catch (error) {
-        console.error("Error deleting comment:", error);
         showError("An error occurred while deleting the comment.");
     }
 }
@@ -553,7 +520,6 @@ async function saveEditedComment(commentId) {
             showError(result.error || "Failed to update comment.");
         }
     } catch (error) {
-        console.error("Error editing comment:", error);
         showError("An error occurred while updating the comment.");
     }
 }
@@ -583,7 +549,6 @@ async function toggleLikeComment(postId, commentId) {
             }
         }
     } catch (error) {
-        console.error("Error liking comment:", error);
         showError("Failed to like comment.");
     }
 }
@@ -613,7 +578,6 @@ async function toggleDislikeComment(postId, commentId) {
             }
         }
     } catch (error) {
-        console.error("Error disliking comment:", error);
         showError("Failed to dislike comment.");
     }
 }
@@ -681,7 +645,6 @@ async function submitReply(commentId) {
             showError("Failed to add reply.");
         }
     } catch (err) {
-        console.error("Error submitting reply:", err);
         showError("An error occurred while submitting the reply.");
     }
 }
@@ -736,7 +699,6 @@ async function deleteReply(postId, commentId, replyId) {
             showError(data.error || "Failed to delete reply.");
         }
     } catch (error) {
-        console.error("Error deleting reply:", error);
         showError("An error occurred while deleting the reply.");
     }
 }
@@ -747,7 +709,6 @@ function openEditReplyModal(replyId) {
     
     const modal = document.getElementById(`edit-reply-modal-${replyId}`);
     if (!modal) {
-        console.error(`Modal not found for reply: ${replyId}`);
         return;
     }
     modal.style.display = "flex";
@@ -793,7 +754,6 @@ async function saveEditedReply(postId, commentId, replyId) {
             showError(result.error || "Failed to edit reply.");
         }
     } catch (error) {
-        console.error("Error editing reply:", error);
         showError("An error occurred while updating the reply.");
     }
 }
@@ -827,7 +787,6 @@ async function likeReply(postId, commentId, replyId) {
             }
         }
     } catch (error) {
-        console.error("Error liking reply:", error);
         showError("Failed to like reply.");
     }
 }
@@ -857,7 +816,6 @@ async function dislikeReply(postId, commentId, replyId) {
             }
         }
     } catch (error) {
-        console.error("Error disliking reply:", error);
         showError("Failed to dislike reply.");
     }
 }

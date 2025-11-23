@@ -72,12 +72,9 @@ app.post('/report/post/:postId', requireAuth, async (req, res) => {
         const { reason, description } = req.body;
         const userId = req.session.userId;
         
-        console.log('Report submission attempt:', { postId, reason, description, userId });
-        
         // Check if post exists
         const post = await Post.findById(postId);
         if (!post) {
-            console.log('Post not found:', postId);
             return res.status(404).json({ error: 'Post not found' });
         }
         
@@ -88,7 +85,6 @@ app.post('/report/post/:postId', requireAuth, async (req, res) => {
         });
         
         if (existingReport) {
-            console.log('Duplicate report attempt');
             return res.json({ error: 'You have already reported this post' });
         }
         
@@ -100,16 +96,12 @@ app.post('/report/post/:postId', requireAuth, async (req, res) => {
             description: description
         });
         
-        console.log('Report created successfully:', newReport._id);
-        
         // Log the report
         await logModerationAction(userId, 'USER_REPORT', `Reported post ${postId} for: ${reason}`);
         
         res.json({ success: true, message: 'Report submitted successfully' });
         
     } catch (error) {
-        console.error('Error reporting post:', error);
-        console.error('Error stack:', error.stack);
         res.status(500).json({ error: 'Failed to submit report', details: error.message });
     }
 });
@@ -121,9 +113,6 @@ app.post('/report/post/:postId', requireAuth, async (req, res) => {
 // View all reports (pending first)
 app.get('/manager/reports', requireAuth, requireRole(['manager', 'administrator']), async (req, res) => {
     try {
-        console.log('Manager reports route hit');
-        console.log('User from middleware:', req.currentUser);
-        
         const reports = await Report.find()
             .populate('post')
             .populate('reportedBy', 'username profilePic')
@@ -136,8 +125,6 @@ app.get('/manager/reports', requireAuth, requireRole(['manager', 'administrator'
                 status: 1,  // pending first
                 createdAt: -1 
             });
-        
-        console.log(`Found ${reports.length} reports`);
         
         res.render('manager-reports', { 
             user: req.currentUser,
