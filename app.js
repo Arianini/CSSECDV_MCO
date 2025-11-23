@@ -232,17 +232,17 @@ server.render = util.promisify(server.render);
 // Serve Static Files
 server.use(express.static(path.join(__dirname, 'public')));
 
-// Serve notification.js and script.js from root
+// Serve JavaScript files from their correct locations
 server.get('/notification.js', (req, res) => {
-    res.sendFile(path.join(__dirname, 'notification.js'));
+    res.sendFile(path.join(__dirname, 'public', 'js', 'notification.js'));
 });
 
 server.get('/script.js', (req, res) => {
-    res.sendFile(path.join(__dirname, 'script.js'));
+    res.sendFile(path.join(__dirname, 'public', 'script.js'));
 });
 
 server.get('/restriction-checker.js', (req, res) => {
-    res.sendFile(path.join(__dirname, 'restriction-checker.js'));
+    res.sendFile(path.join(__dirname, 'public', 'js', 'restriction-checker.js'));
 });
 
 // ============================================
@@ -916,7 +916,7 @@ server.get('/profile/posts', isAuthenticated, async (req, res) => {
         });
 
     } catch (err) {
-        console.error('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Error fetching user posts for profile:', err);
+        console.error('ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ Error fetching user posts for profile:', err);
         res.status(500).send('Internal Server Error');
     }
 });
@@ -939,7 +939,7 @@ server.get('/profile/likes', isAuthenticated, async (req, res) => {
 
         res.render('profile/likes', { layout: false, posts: likedPosts, userProfile: user });
     } catch (err) {
-        console.error("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Error loading liked posts:", err);
+        console.error("ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ Error loading liked posts:", err);
         res.status(500).send("Internal Server Error");
     }
 });
@@ -962,7 +962,7 @@ server.get('/profile/dislikes', isAuthenticated, async (req, res) => {
 
         res.render('profile/dislikes', { layout: false, posts: dislikedPosts, userProfile: user });
     } catch (err) {
-        console.error("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Error loading disliked posts:", err);
+        console.error("ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ Error loading disliked posts:", err);
         res.status(500).send("Internal Server Error");
     }
 });
@@ -1011,7 +1011,7 @@ server.post('/settings', isAuthenticated, async (req, res) => {
         if (!newUsername || newUsername.trim().length === 0) {
             await logActivity(req.session.userId, 'VALIDATION_FAILED', 'USERNAME_CHANGE', 
                             req.session.userId, 'Username change failed: Empty username', getClientIp(req));
-            return res.status(400).send("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  Username cannot be empty!");
+            return res.status(400).send("ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  Username cannot be empty!");
         }
 
         // Case-insensitive check for existing username
@@ -1022,12 +1022,12 @@ server.post('/settings', isAuthenticated, async (req, res) => {
             // 2.4.4 - Log input validation failure
             await logActivity(req.session.userId, 'VALIDATION_FAILED', 'USERNAME_CHANGE', 
                             req.session.userId, 'Username change failed: Username already exists', getClientIp(req));
-            return res.status(400).send("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  Username already exists!");
+            return res.status(400).send("ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  Username already exists!");
         }
 
         const user = await User.findById(req.session.userId);
         if (!user) {
-            return res.status(400).send("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ User not found!");
+            return res.status(400).send("ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ User not found!");
         }
 
         const oldUsername = user.username;
@@ -1175,7 +1175,7 @@ server.post('/create-post', isAuthenticated, requireNotRestricted, upload.single
 
         res.json({ success: true, message: "Post created successfully!" });
     } catch (err) {
-        console.error("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¨ Error creating post:", err);
+        console.error("ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â°ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¨ Error creating post:", err);
         res.status(500).json({ error: "Internal Server Error" });
     }
 });
@@ -1777,6 +1777,25 @@ server.post('/reply-dislike/:postId/:commentId/:replyId', isAuthenticated, async
     } catch (err) {
         console.error("Error disliking reply:", err);
         res.status(500).json({ success: false, message: "Server error" });
+    }
+});
+
+// ============================================
+// USER RESTRICTION CHECK API
+// ============================================
+
+// API endpoint to check if current user has active restrictions
+server.get('/api/check-restriction', isAuthenticated, async (req, res) => {
+    try {
+        const restrictionStatus = await checkUserRestriction(req.session.userId);
+        res.json(restrictionStatus);
+    } catch (err) {
+        console.error("Error checking restriction:", err);
+        res.status(500).json({ 
+            restricted: false, 
+            restriction: null, 
+            message: null 
+        });
     }
 });
 
