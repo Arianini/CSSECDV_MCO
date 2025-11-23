@@ -112,7 +112,14 @@ const postSchema = new mongoose.Schema({
     ],
     createdAt: { type: Date, default: Date.now },
     likesCount: { type: Number, default: 0 },
-    dislikesCount: { type: Number, default: 0 }
+    dislikesCount: { type: Number, default: 0 },
+    
+    // ===== MODERATION FIELDS =====
+    isHidden: { type: Boolean, default: false },
+    hiddenReason: { type: String, default: '' },
+    hiddenBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    hiddenAt: { type: Date }
+    // ===== END MODERATION FIELDS =====
 });
 
 const Post = mongoose.model('Post', postSchema);

@@ -2,32 +2,60 @@
 // ADMIN USER MANAGEMENT JAVASCRIPT
 // ============================================
 
-// Show create manager modal
-function showCreateManagerModal() {
-    const modal = document.getElementById('createManagerModal');
-    modal.classList.add('show');
+let currentUserId = null;
+let currentUsername = null;
+
+// Show create user modal
+function showCreateUserModal() {
+    const modal = document.getElementById('createUserModal');
+    modal.style.display = 'block';
+    setTimeout(() => modal.classList.add('show'), 10);
 }
 
-// Close create manager modal
-function closeCreateManagerModal() {
-    const modal = document.getElementById('createManagerModal');
+// Close create user modal
+function closeCreateUserModal() {
+    const modal = document.getElementById('createUserModal');
     modal.classList.remove('show');
-    document.getElementById('createManagerForm').reset();
+    setTimeout(() => {
+        modal.style.display = 'none';
+        document.getElementById('createUserForm').reset();
+    }, 300);
 }
 
-// Create manager account
-function createManager(event) {
+// Toggle managed tags field based on role selection
+function toggleManagedTagsField() {
+    const role = document.getElementById('newUserRole').value;
+    const managedTagsGroup = document.getElementById('managedTagsGroup');
+    
+    if (role === 'manager') {
+        managedTagsGroup.style.display = 'block';
+    } else {
+        managedTagsGroup.style.display = 'none';
+    }
+}
+
+// Create user account
+async function createUser(event) {
     event.preventDefault();
     
-    const username = document.getElementById('managerUsername').value;
-    const password = document.getElementById('managerPassword').value;
-    const userTag = document.getElementById('managerUserTag').value;
-    const managedTagsInput = document.getElementById('managedTags').value;
+    const role = document.getElementById('newUserRole').value;
+    const username = document.getElementById('newUsername').value;
+    const password = document.getElementById('newPassword').value;
+    const userTag = document.getElementById('newUserTag').value;
+    const securityQuestion = document.getElementById('newSecurityQuestion').value;
+    const securityAnswer = document.getElementById('newSecurityAnswer').value;
+    const managedTagsInput = document.getElementById('newManagedTags').value;
     const managedTags = managedTagsInput ? managedTagsInput.split(',').map(t => t.trim()) : [];
     
     // Validate password
     if (!validatePassword(password)) {
-        alert('Password must contain at least 8 characters with uppercase, lowercase, number, and special character');
+        showNotification('Error', 'Password must contain at least 8 characters with uppercase, lowercase, number, and special character', 'error');
+        return;
+    }
+    
+    // Validate security question and answer
+    if (!securityQuestion || !securityAnswer) {
+        showNotification('Error', 'Security question and answer are required', 'error');
         return;
     }
     
@@ -36,28 +64,37 @@ function createManager(event) {
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
     submitBtn.disabled = true;
     
-    fetch('/admin/create-manager', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, userTag, managedTags })
-    })
-    .then(res => res.json())
-    .then(data => {
+    try {
+        const response = await fetch('/admin/users/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                role, 
+                username, 
+                password, 
+                userTag, 
+                securityQuestion, 
+                securityAnswer, 
+                managedTags 
+            })
+        });
+        
+        const data = await response.json();
+        
         if (data.success) {
-            showNotification('Success!', 'Manager account created successfully', 'success');
+            showNotification('Success!', 'User account created successfully', 'success');
             setTimeout(() => location.reload(), 1500);
         } else {
-            showNotification('Error', data.error || 'Failed to create manager', 'error');
+            showNotification('Error', data.error || 'Failed to create user', 'error');
             submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
         }
-    })
-    .catch(error => {
+    } catch (error) {
         console.error('Error:', error);
-        showNotification('Error', 'Failed to create manager account', 'error');
+        showNotification('Error', 'Failed to create user account', 'error');
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
-    });
+    }
 }
 
 // Validate password strength
@@ -71,37 +108,118 @@ function validatePassword(password) {
     return hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar && isLongEnough;
 }
 
-// Ban user
-function banUser(userId, username) {
-    const modal = document.createElement('div');
-    modal.className = 'modal show';
-    modal.innerHTML = `
-        <div class="modal-content" style="max-width: 500px;">
-            <div class="modal-header">
-                <h2><i class="fas fa-ban"></i> Ban User: ${username}</h2>
-                <span class="close" onclick="this.closest('.modal').remove()">&times;</span>
-            </div>
-            <div style="padding: 25px;">
-                <label style="display: block; color: #007BFF; margin-bottom: 10px; font-weight: bold;">
-                    <i class="fas fa-exclamation-triangle"></i> Reason for Ban
-                </label>
-                <textarea id="banReason" placeholder="Enter reason for banning this user..." style="width: 100%; min-height: 100px; padding: 10px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 5px; margin-bottom: 15px;"></textarea>
-                <div style="background: #2a1a1a; padding: 15px; border-radius: 5px; border-left: 4px solid #f44336; margin-bottom: 15px;">
-                    <p style="color: #ff6b6b; margin: 0; font-size: 14px;">
-                        <i class="fas fa-exclamation-circle"></i> <strong>Warning:</strong> This will permanently ban ${username} from the platform.
-                    </p>
-                </div>
-                <button class="btn btn-danger btn-full" onclick="confirmBan('${userId}', '${username}')">
-                    <i class="fas fa-ban"></i> Confirm Permanent Ban
-                </button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
+// Real-time password strength validation display
+function validatePasswordStrength() {
+    const password = document.getElementById('newPassword').value;
+    
+    // Check each requirement
+    const hasLength = password.length >= 8;
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+    
+    // Update UI for each requirement
+    updateRequirement('req-length', hasLength);
+    updateRequirement('req-uppercase', hasUpperCase);
+    updateRequirement('req-lowercase', hasLowerCase);
+    updateRequirement('req-number', hasNumber);
+    updateRequirement('req-special', hasSpecialChar);
 }
 
-// Confirm ban action
-function confirmBan(userId, username) {
+// Update requirement UI
+function updateRequirement(id, met) {
+    const element = document.getElementById(id);
+    if (met) {
+        element.classList.add('met');
+        element.querySelector('i').className = 'fas fa-check-circle';
+    } else {
+        element.classList.remove('met');
+        element.querySelector('i').className = 'fas fa-circle';
+    }
+}
+
+// Show restrict user modal
+function showRestrictModal(userId, username) {
+    currentUserId = userId;
+    currentUsername = username;
+    
+    const modal = document.getElementById('restrictModal');
+    document.getElementById('restrictUsername').textContent = username;
+    modal.style.display = 'block';
+    setTimeout(() => modal.classList.add('show'), 10);
+}
+
+// Close restrict modal
+function closeRestrictModal() {
+    const modal = document.getElementById('restrictModal');
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.style.display = 'none';
+        document.getElementById('restrictForm').reset();
+    }, 300);
+}
+
+// Submit restrict action
+async function submitRestrict(event) {
+    event.preventDefault();
+    
+    const hours = parseInt(document.getElementById('restrictDuration').value);
+    const reason = document.getElementById('restrictReason').value.trim();
+    
+    if (!reason) {
+        showNotification('Error', 'Please provide a reason for the restriction', 'error');
+        return;
+    }
+    
+    closeRestrictModal();
+    
+    try {
+        const response = await fetch(`/admin/users/${currentUserId}/restrict`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ hours, reason })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification('Success!', `User ${currentUsername} has been restricted for ${hours} hours`, 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showNotification('Error', data.error || 'Failed to restrict user', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('Error', 'Failed to restrict user', 'error');
+    }
+}
+
+// Show ban user modal
+function showBanModal(userId, username) {
+    currentUserId = userId;
+    currentUsername = username;
+    
+    const modal = document.getElementById('banModal');
+    document.getElementById('banUsername').textContent = username;
+    modal.style.display = 'block';
+    setTimeout(() => modal.classList.add('show'), 10);
+}
+
+// Close ban modal
+function closeBanModal() {
+    const modal = document.getElementById('banModal');
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.style.display = 'none';
+        document.getElementById('banForm').reset();
+    }, 300);
+}
+
+// Submit ban action
+async function submitBan(event) {
+    event.preventDefault();
+    
     const reason = document.getElementById('banReason').value.trim();
     
     if (!reason) {
@@ -109,93 +227,65 @@ function confirmBan(userId, username) {
         return;
     }
     
-    // Close the modal
-    document.querySelector('.modal.show').remove();
+    closeBanModal();
     
-    fetch(`/admin/users/${userId}/ban`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason })
-    })
-    .then(res => res.json())
-    .then(data => {
+    try {
+        const response = await fetch(`/admin/users/${currentUserId}/ban`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason })
+        });
+        
+        const data = await response.json();
+        
         if (data.success) {
-            showNotification('Success!', `User ${username} has been permanently banned`, 'success');
+            showNotification('Success!', `User ${currentUsername} has been permanently banned`, 'success');
             setTimeout(() => location.reload(), 1500);
         } else {
             showNotification('Error', data.error || 'Failed to ban user', 'error');
         }
-    })
-    .catch(error => {
+    } catch (error) {
         console.error('Error:', error);
         showNotification('Error', 'Failed to ban user', 'error');
-    });
+    }
 }
 
 // Unban user
-function unbanUser(userId, username) {
-    const modal = document.createElement('div');
-    modal.className = 'modal show';
-    modal.innerHTML = `
-        <div class="modal-content" style="max-width: 450px;">
-            <div class="modal-header">
-                <h2><i class="fas fa-user-check"></i> Unban User</h2>
-                <span class="close" onclick="this.closest('.modal').remove()">&times;</span>
-            </div>
-            <div style="padding: 25px;">
-                <div style="background: #1a2a1a; padding: 15px; border-radius: 5px; border-left: 4px solid #4CAF50; margin-bottom: 15px;">
-                    <p style="color: #6bff6b; margin: 0; font-size: 14px;">
-                        <i class="fas fa-info-circle"></i> This will restore access for <strong>${username}</strong>
-                    </p>
-                </div>
-                <button class="btn btn-success btn-full" onclick="confirmUnban('${userId}', '${username}')">
-                    <i class="fas fa-check"></i> Confirm Unban
-                </button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-}
-
-// Confirm unban action
-function confirmUnban(userId, username) {
-    document.querySelector('.modal.show').remove();
+async function unbanUser(userId, username) {
+    if (!confirm(`Are you sure you want to unban ${username}?`)) {
+        return;
+    }
     
-    fetch(`/admin/users/${userId}/unban`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-    })
-    .then(res => res.json())
-    .then(data => {
+    try {
+        const response = await fetch(`/admin/users/${userId}/unban`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const data = await response.json();
+        
         if (data.success) {
             showNotification('Success!', `User ${username} has been unbanned`, 'success');
             setTimeout(() => location.reload(), 1500);
         } else {
             showNotification('Error', data.error || 'Failed to unban user', 'error');
         }
-    })
-    .catch(error => {
+    } catch (error) {
         console.error('Error:', error);
         showNotification('Error', 'Failed to unban user', 'error');
-    });
+    }
 }
 
 // Change user role
 function changeRole(userId, username, currentRole) {
-    const roleOptions = ['user', 'manager', 'administrator'];
-    const roleSelect = document.createElement('select');
-    roleSelect.style.cssText = 'padding: 8px; font-size: 14px; margin: 10px 0;';
+    currentUserId = userId;
+    currentUsername = username;
     
-    roleOptions.forEach(role => {
-        const option = document.createElement('option');
-        option.value = role;
-        option.textContent = role.charAt(0).toUpperCase() + role.slice(1);
-        if (role === currentRole) option.selected = true;
-        roleSelect.appendChild(option);
-    });
+    const roleOptions = ['user', 'manager', 'administrator'];
     
     const modal = document.createElement('div');
     modal.className = 'modal show';
+    modal.style.display = 'block';
     modal.innerHTML = `
         <div class="modal-content" style="max-width: 400px;">
             <div class="modal-header">
@@ -203,11 +293,19 @@ function changeRole(userId, username, currentRole) {
                 <span class="close" onclick="this.closest('.modal').remove()">&times;</span>
             </div>
             <div style="padding: 25px;">
-                <label style="display: block; color: #007BFF; margin-bottom: 10px; font-weight: bold;">
-                    <i class="fas fa-shield-alt"></i> Select New Role
-                </label>
-                <div id="roleSelectContainer"></div>
-                <button class="btn btn-primary btn-full" style="margin-top: 15px;" onclick="submitRoleChange('${userId}', '${username}')">
+                <div class="form-group">
+                    <label style="display: block; color: #007BFF; margin-bottom: 10px; font-weight: bold;">
+                        <i class="fas fa-shield-alt"></i> Select New Role
+                    </label>
+                    <select id="roleSelect" style="width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 5px;">
+                        ${roleOptions.map(role => `
+                            <option value="${role}" ${role === currentRole ? 'selected' : ''}>
+                                ${role.charAt(0).toUpperCase() + role.slice(1)}
+                            </option>
+                        `).join('')}
+                    </select>
+                </div>
+                <button class="btn btn-primary btn-full" style="margin-top: 15px;" onclick="submitRoleChange()">
                     <i class="fas fa-check"></i> Change Role
                 </button>
             </div>
@@ -215,94 +313,90 @@ function changeRole(userId, username, currentRole) {
     `;
     
     document.body.appendChild(modal);
-    document.getElementById('roleSelectContainer').appendChild(roleSelect);
 }
 
 // Submit role change
-function submitRoleChange(userId, username) {
-    const roleSelect = document.querySelector('#roleSelectContainer select');
+async function submitRoleChange() {
+    const roleSelect = document.getElementById('roleSelect');
     const newRole = roleSelect.value;
     
-    fetch(`/admin/users/${userId}/role`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: newRole })
-    })
-    .then(res => res.json())
-    .then(data => {
+    // Close the modal
+    document.querySelector('.modal.show:last-child').remove();
+    
+    try {
+        const response = await fetch(`/admin/users/${currentUserId}/role`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role: newRole })
+        });
+        
+        const data = await response.json();
+        
         if (data.success) {
-            showNotification('Success!', `Role changed for ${username}`, 'success');
+            showNotification('Success!', `Role changed for ${currentUsername}`, 'success');
             setTimeout(() => location.reload(), 1500);
         } else {
             showNotification('Error', data.error || 'Failed to change role', 'error');
         }
-    })
-    .catch(error => {
+    } catch (error) {
         console.error('Error:', error);
         showNotification('Error', 'Failed to change role', 'error');
-    });
+    }
 }
 
-// Delete user
-function deleteUser(userId, username) {
-    const modal = document.createElement('div');
-    modal.className = 'modal show';
-    modal.innerHTML = `
-        <div class="modal-content" style="max-width: 500px;">
-            <div class="modal-header">
-                <h2><i class="fas fa-trash-alt"></i> Delete User Account</h2>
-                <span class="close" onclick="this.closest('.modal').remove()">&times;</span>
-            </div>
-            <div style="padding: 25px;">
-                <div style="background: #3a1a1a; padding: 15px; border-radius: 5px; border-left: 4px solid #ff4444; margin-bottom: 15px;">
-                    <p style="color: #ff6b6b; margin: 0 0 10px 0; font-size: 14px;">
-                        <i class="fas fa-exclamation-triangle"></i> <strong>CRITICAL WARNING:</strong>
-                    </p>
-                    <p style="color: #ffaaaa; margin: 0; font-size: 13px;">
-                        This will permanently delete <strong>${username}</strong>'s account and ALL associated data. This action cannot be undone!
-                    </p>
-                </div>
-                <label style="display: block; color: #007BFF; margin-bottom: 10px; font-weight: bold;">
-                    <i class="fas fa-keyboard"></i> Type username to confirm
-                </label>
-                <input type="text" id="deleteConfirmUsername" placeholder="Type ${username}" style="width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 5px; margin-bottom: 15px;">
-                <button class="btn btn-danger btn-full" onclick="confirmDelete('${userId}', '${username}')">
-                    <i class="fas fa-trash-alt"></i> Permanently Delete Account
-                </button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-}
-
-// Confirm delete action
-function confirmDelete(userId, username) {
-    const confirmUsername = document.getElementById('deleteConfirmUsername').value;
+// Show delete user modal
+function showDeleteModal(userId, username) {
+    currentUserId = userId;
+    currentUsername = username;
     
-    if (confirmUsername !== username) {
+    const modal = document.getElementById('deleteModal');
+    document.getElementById('deleteUsername').textContent = username;
+    document.getElementById('deleteConfirm').placeholder = `Type ${username}`;
+    modal.style.display = 'block';
+    setTimeout(() => modal.classList.add('show'), 10);
+}
+
+// Close delete modal
+function closeDeleteModal() {
+    const modal = document.getElementById('deleteModal');
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.style.display = 'none';
+        document.getElementById('deleteForm').reset();
+    }, 300);
+}
+
+// Submit delete action
+async function submitDelete(event) {
+    event.preventDefault();
+    
+    const confirmUsername = document.getElementById('deleteConfirm').value;
+    
+    if (confirmUsername !== currentUsername) {
         showNotification('Error', 'Username did not match. Deletion cancelled.', 'error');
         return;
     }
     
-    document.querySelector('.modal.show').remove();
+    closeDeleteModal();
     
-    fetch(`/admin/users/${userId}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' }
-    })
-    .then(res => res.json())
-    .then(data => {
+    try {
+        const response = await fetch(`/admin/users/${currentUserId}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const data = await response.json();
+        
         if (data.success) {
-            showNotification('Success!', `User ${username} has been deleted`, 'success');
+            showNotification('Success!', `User ${currentUsername} has been deleted`, 'success');
             setTimeout(() => location.reload(), 1500);
         } else {
             showNotification('Error', data.error || 'Failed to delete user', 'error');
         }
-    })
-    .catch(error => {
+    } catch (error) {
         console.error('Error:', error);
         showNotification('Error', 'Failed to delete user', 'error');
-    });
+    }
 }
 
 // Show notification
@@ -312,7 +406,7 @@ function showNotification(title, message, type) {
     notification.innerHTML = `
         <div class="notification-header">
             <strong>${title}</strong>
-            <button onclick="this.parentElement.parentElement.remove()">Ã—</button>
+            <button onclick="this.parentElement.parentElement.remove()">&times;</button>
         </div>
         <div class="notification-body">${message}</div>
     `;
@@ -327,121 +421,24 @@ function showNotification(title, message, type) {
 // Close modal when clicking outside
 window.onclick = function(event) {
     if (event.target.classList.contains('modal')) {
-        event.target.classList.remove('show');
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            modal.classList.remove('show');
+            setTimeout(() => modal.style.display = 'none', 300);
+        });
     }
 }
 
 // Auto-fill user tag based on username
-document.getElementById('managerUsername')?.addEventListener('input', function() {
-    const userTag = document.getElementById('managerUserTag');
-    if (this.value && !userTag.value) {
-        userTag.value = `u/${this.value}`;
+document.addEventListener('DOMContentLoaded', function() {
+    const usernameInput = document.getElementById('newUsername');
+    const userTagInput = document.getElementById('newUserTag');
+    
+    if (usernameInput && userTagInput) {
+        usernameInput.addEventListener('input', function() {
+            if (this.value && !userTagInput.value) {
+                userTagInput.value = `u/${this.value}`;
+            }
+        });
     }
 });
-
-// Add notification styles
-const notificationStyles = document.createElement('style');
-notificationStyles.textContent = `
-    .notification {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        min-width: 300px;
-        background: #1f1f1f;
-        border-radius: 8px;
-        padding: 15px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-        z-index: 9999;
-        animation: slideIn 0.3s ease-out;
-    }
-    
-    @keyframes slideIn {
-        from {
-            transform: translateX(400px);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-    
-    .notification-success {
-        border-left: 4px solid #4CAF50;
-    }
-    
-    .notification-error {
-        border-left: 4px solid #f44336;
-    }
-    
-    .notification-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 8px;
-        color: #fff;
-    }
-    
-    .notification-header button {
-        background: none;
-        border: none;
-        color: #aaa;
-        font-size: 24px;
-        cursor: pointer;
-        padding: 0;
-        width: 30px;
-        height: 30px;
-    }
-    
-    .notification-header button:hover {
-        color: #fff;
-    }
-    
-    .notification-body {
-        color: #ddd;
-        font-size: 14px;
-    }
-    
-    /* Button styles for modals */
-    .btn {
-        padding: 12px 20px;
-        border: none;
-        border-radius: 5px;
-        font-size: 14px;
-        font-weight: bold;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-full {
-        width: 100%;
-    }
-    
-    .btn-primary {
-        background: #007BFF;
-        color: white;
-    }
-    
-    .btn-primary:hover {
-        background: #0056b3;
-    }
-    
-    .btn-danger {
-        background: #dc3545;
-        color: white;
-    }
-    
-    .btn-danger:hover {
-        background: #a71d2a;
-    }
-    
-    .btn-success {
-        background: #28a745;
-        color: white;
-    }
-    
-    .btn-success:hover {
-        background: #1e7e34;
-    }
-`;
-document.head.appendChild(notificationStyles);

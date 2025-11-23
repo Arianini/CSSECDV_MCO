@@ -62,7 +62,7 @@
                             <div class="action-buttons">
                                 {{#if isRestricted}}
                                     <button class="btn-small btn-success" onclick="unbanUser('{{_id}}', '{{username}}')">
-                                        <i class="fas fa-unlock"></i> Unban
+                                        <i class="fas fa-unlock"></i> Unrestrict
                                     </button>
                                 {{else}}
                                     <button class="btn-small btn-warning" onclick="showRestrictModal('{{_id}}', '{{username}}')">
@@ -125,8 +125,25 @@
                     </label>
                     <input type="password" id="newPassword" required 
                            placeholder="Enter password"
-                           minlength="8">
-                    <small>Must be at least 8 characters with uppercase, lowercase, number, and special character</small>
+                           minlength="8"
+                           oninput="validatePasswordStrength()">
+                    <div id="passwordRequirements" class="password-requirements">
+                        <div class="requirement" id="req-length">
+                            <i class="fas fa-circle"></i> At least 8 characters
+                        </div>
+                        <div class="requirement" id="req-uppercase">
+                            <i class="fas fa-circle"></i> One uppercase letter
+                        </div>
+                        <div class="requirement" id="req-lowercase">
+                            <i class="fas fa-circle"></i> One lowercase letter
+                        </div>
+                        <div class="requirement" id="req-number">
+                            <i class="fas fa-circle"></i> One number
+                        </div>
+                        <div class="requirement" id="req-special">
+                            <i class="fas fa-circle"></i> One special character (!@#$%^&*()_+-=[]{}|)
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="form-group">
@@ -135,6 +152,29 @@
                     </label>
                     <input type="text" id="newUserTag" required 
                            placeholder="u/username">
+                </div>
+                
+                <div class="form-group">
+                    <label for="newSecurityQuestion">
+                        <i class="fas fa-question-circle"></i> Security Question
+                    </label>
+                    <select id="newSecurityQuestion" required>
+                        <option value="">Select a security question</option>
+                        <option value="What is your favorite color?">What is your favorite color?</option>
+                        <option value="What city were you born in?">What city were you born in?</option>
+                        <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
+                        <option value="What was the name of your first pet?">What was the name of your first pet?</option>
+                        <option value="What is your favorite food?">What is your favorite food?</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="newSecurityAnswer">
+                        <i class="fas fa-key"></i> Security Answer
+                    </label>
+                    <input type="text" id="newSecurityAnswer" required 
+                           placeholder="Enter security answer">
+                    <small>This will be used for password recovery</small>
                 </div>
                 
                 <div class="form-group" id="managedTagsGroup">

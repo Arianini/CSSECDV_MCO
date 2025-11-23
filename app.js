@@ -1828,14 +1828,14 @@ server.get('/admin/users', isAdministrator, async (req, res) => {
 });
 
 server.post('/admin/users/create', isAdministrator, async (req, res) => {
-    const { username, password, role, managedTags } = req.body;
+    const { username, password, role, managedTags, securityQuestion, securityAnswer } = req.body;
 
     try {
-        if (!username || !password || !role) {
+        if (!username || !password || !role || !securityQuestion || !securityAnswer) {
             // 2.4.4 - Log input validation failure
             await logActivity(req.session.userId, 'VALIDATION_FAILED', 'USER_CREATE', 
                             username || 'unknown', 'User creation failed: Missing required fields', getClientIp(req));
-            return res.status(400).json({ error: 'All fields are required' });
+            return res.status(400).json({ error: 'All fields including security question and answer are required' });
         }
 
         // Case-insensitive check for existing username
@@ -1854,13 +1854,16 @@ server.post('/admin/users/create', isAdministrator, async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedSecurityAnswer = await bcrypt.hash(securityAnswer.toLowerCase(), 10);
         
         const newUser = new User({
             username,
             password: hashedPassword,
             userTag: `u/${username}`,
             role,
-            managedTags: role === 'manager' && managedTags ? managedTags.split(',').map(t => t.trim()) : []
+            managedTags: role === 'manager' && managedTags ? managedTags.split(',').map(t => t.trim()) : [],
+            securityQuestion: securityQuestion,
+            securityAnswer: hashedSecurityAnswer
         });
 
         await newUser.save();

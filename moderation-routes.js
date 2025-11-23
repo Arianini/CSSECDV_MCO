@@ -144,16 +144,31 @@ app.get('/manager/reports', requireAuth, requireRole(['manager', 'administrator'
 // Handle a report (manager action)
 app.post('/manager/reports/:reportId/handle', requireAuth, requireRole(['manager', 'administrator']), async (req, res) => {
     try {
+        console.log('Handle report called:', { reportId: req.params.reportId, action: req.body.action });
+        
         const reportId = req.params.reportId;
         const { action, notes } = req.body;
         
+        if (!action || !notes) {
+            console.error('Missing action or notes');
+            return res.status(400).json({ error: 'Action and notes are required' });
+        }
+        
         const report = await Report.findById(reportId).populate('post');
         if (!report) {
+            console.error('Report not found:', reportId);
             return res.status(404).json({ error: 'Report not found' });
+        }
+        
+        if (!report.post) {
+            console.error('Post not found for report:', reportId);
+            return res.status(404).json({ error: 'Post associated with report not found' });
         }
         
         const managerId = req.session.userId;
         const postAuthorId = report.post.user;
+        
+        console.log('Processing action:', { action, managerId, postAuthorId });
         
         // Perform action based on type
         switch(action) {
@@ -266,14 +281,17 @@ app.post('/manager/reports/:reportId/handle', requireAuth, requireRole(['manager
                 break;
                 
             default:
+                console.error('Invalid action:', action);
                 return res.status(400).json({ error: 'Invalid action' });
         }
         
+        console.log('Report handled successfully');
         res.json({ success: true, message: 'Report handled successfully' });
         
     } catch (error) {
         console.error('Error handling report:', error);
-        res.status(500).json({ error: 'Failed to handle report' });
+        console.error('Error stack:', error.stack);
+        res.status(500).json({ error: 'Failed to handle report', details: error.message });
     }
 });
 
@@ -350,8 +368,24 @@ app.get('/admin/users', requireAuth, requireRole('administrator'), async (req, r
 // Permanent ban (admin only)
 app.post('/admin/users/:userId/ban', requireAuth, requireRole('administrator'), async (req, res) => {
     try {
+        console.log('Ban user called:', { userId: req.params.userId, body: req.body });
+        
         const userId = req.params.userId;
         const { reason } = req.body;
+        
+        if (!reason) {
+            console.error('Missing reason');
+            return res.status(400).json({ error: 'Reason is required' });
+        }
+        
+        // Check if user exists
+        const user = await User.findById(userId);
+        if (!user) {
+            console.error('User not found:', userId);
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        console.log('Creating permanent ban for user:', userId);
         
         // Create permanent restriction
         await UserRestriction.create({
@@ -366,11 +400,13 @@ app.post('/admin/users/:userId/ban', requireAuth, requireRole('administrator'), 
         
         await logModerationAction(req.session.userId, 'PERMANENT_BAN', `Permanently banned user ${userId}`);
         
+        console.log('User banned successfully');
         res.json({ success: true, message: 'User permanently banned' });
         
     } catch (error) {
         console.error('Error banning user:', error);
-        res.status(500).json({ error: 'Failed to ban user' });
+        console.error('Error stack:', error.stack);
+        res.status(500).json({ error: 'Failed to ban user', details: error.message });
     }
 });
 
@@ -398,12 +434,34 @@ app.post('/admin/users/:userId/unban', requireAuth, requireRole('administrator')
 // Temporary restrict user (admin only)
 app.post('/admin/users/:userId/restrict', requireAuth, requireRole('administrator'), async (req, res) => {
     try {
+        console.log('Restrict user called:', { userId: req.params.userId, body: req.body });
+        
         const userId = req.params.userId;
         const { hours, reason } = req.body;
         
+        if (!hours || !reason) {
+            console.error('Missing hours or reason');
+            return res.status(400).json({ error: 'Hours and reason are required' });
+        }
+        
+        const hoursNum = parseInt(hours);
+        if (isNaN(hoursNum) || hoursNum <= 0) {
+            console.error('Invalid hours value:', hours);
+            return res.status(400).json({ error: 'Invalid hours value' });
+        }
+        
+        // Check if user exists
+        const user = await User.findById(userId);
+        if (!user) {
+            console.error('User not found:', userId);
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
         // Calculate end date based on hours
         const endDate = new Date();
-        endDate.setHours(endDate.getHours() + hours);
+        endDate.setHours(endDate.getHours() + hoursNum);
+        
+        console.log('Creating restriction:', { userId, hours: hoursNum, endDate });
         
         // Create temporary restriction
         await UserRestriction.create({
@@ -416,13 +474,15 @@ app.post('/admin/users/:userId/restrict', requireAuth, requireRole('administrato
             isActive: true
         });
         
-        await logModerationAction(req.session.userId, 'RESTRICT_USER', `Temporarily restricted user ${userId} for ${hours} hours`);
+        await logModerationAction(req.session.userId, 'RESTRICT_USER', `Temporarily restricted user ${userId} for ${hoursNum} hours`);
         
+        console.log('User restricted successfully');
         res.json({ success: true, message: 'User restricted successfully' });
         
     } catch (error) {
         console.error('Error restricting user:', error);
-        res.status(500).json({ error: 'Failed to restrict user' });
+        console.error('Error stack:', error.stack);
+        res.status(500).json({ error: 'Failed to restrict user', details: error.message });
     }
 });
 
