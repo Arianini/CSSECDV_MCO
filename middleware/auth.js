@@ -127,6 +127,14 @@ async function isAccountLocked(user) {
             message: `Account is locked. Please try again in ${minutesLeft} minute(s).`
         };
     }
+    
+    // If lockout period has expired, reset the counter
+    if (user.accountLockedUntil && user.accountLockedUntil <= new Date()) {
+        user.failedLoginAttempts = 0;
+        user.accountLockedUntil = null;
+        await user.save();
+    }
+    
     return { locked: false };
 }
 
@@ -161,14 +169,18 @@ async function handleSuccessfulLogin(user) {
 // ============================================
 
 async function isPasswordReused(user, newPassword) {
-    if (!user.passwordHistory || user.passwordHistory.length === 0) {
-        return false;
+    // CRITICAL FIX: Check against current password FIRST
+    // This prevents users from "changing" to the same password they already have
+    if (await bcrypt.compare(newPassword, user.password)) {
+        return true;
     }
     
-    // Check against last 5 passwords
-    for (let oldPass of user.passwordHistory) {
-        if (await bcrypt.compare(newPassword, oldPass.password)) {
-            return true;
+    // Then check against password history (last 5 passwords)
+    if (user.passwordHistory && user.passwordHistory.length > 0) {
+        for (let oldPass of user.passwordHistory) {
+            if (await bcrypt.compare(newPassword, oldPass.password)) {
+                return true;
+            }
         }
     }
     
@@ -208,10 +220,12 @@ function canChangePassword(user) {
     
     const daysSinceChange = (new Date() - user.passwordChangedAt) / (1000 * 60 * 60 * 24);
     
-    if (daysSinceChange < 1) {
+    // NOTE: Changed to 1 minute (0.0007 days) for demo purposes
+    // Production should be 1 day (1)
+    if (daysSinceChange < 0.0007) {
         return {
             allowed: false,
-            message: 'Password can only be changed once per day. Please try again tomorrow.'
+            message: 'Password can only be changed once per minute. Please try again shortly.'
         };
     }
     
@@ -223,26 +237,80 @@ function canChangePassword(user) {
 // ============================================
 
 function validateSecurityQuestion(question, answer) {
-    const weakAnswers = [
-        'the bible', 'bible', 'jesus', 'god', 
-        'pizza', 'blue', 'red', 'black', 'white',
-        'mom', 'dad', 'mother', 'father',
-        '123', 'password', 'admin'
-    ];
-    
     const answerLower = answer.toLowerCase().trim();
     
-    if (weakAnswers.includes(answerLower)) {
-        return {
-            valid: false,
-            message: 'Security answer is too common. Please choose a more unique answer.'
-        };
-    }
-    
+    // Basic length check
     if (answerLower.length < 3) {
         return {
             valid: false,
             message: 'Security answer must be at least 3 characters long.'
+        };
+    }
+    
+    // Define question-specific weak answers based on context
+    const questionLower = question.toLowerCase();
+    
+    // Weak answers for "favorite book" questions
+    if (questionLower.includes('book')) {
+        const weakBooks = ['the bible', 'bible', 'harry potter', 'twilight', 'quran', 'koran'];
+        if (weakBooks.includes(answerLower)) {
+            return {
+                valid: false,
+                message: 'This answer is too common for the selected question. Please choose something more unique.'
+            };
+        }
+    }
+    
+    // Weak answers for "favorite food" questions
+    if (questionLower.includes('food')) {
+        const weakFoods = ['pizza', 'burger', 'chicken', 'rice', 'pasta'];
+        if (weakFoods.includes(answerLower)) {
+            return {
+                valid: false,
+                message: 'This answer is too common for the selected question. Please choose something more unique.'
+            };
+        }
+    }
+    
+    // Weak answers for "favorite color" questions
+    if (questionLower.includes('color')) {
+        const weakColors = ['blue', 'red', 'black', 'white', 'green', 'pink', 'yellow'];
+        if (weakColors.includes(answerLower)) {
+            return {
+                valid: false,
+                message: 'This answer is too common for the selected question. Please choose something more unique.'
+            };
+        }
+    }
+    
+    // Weak answers for "mother's maiden name" questions
+    if (questionLower.includes('mother') || questionLower.includes('maiden')) {
+        const weakNames = ['smith', 'jones', 'williams', 'brown', 'davis', 'miller', 'garcia', 'rodriguez', 'mom', 'mother'];
+        if (weakNames.includes(answerLower)) {
+            return {
+                valid: false,
+                message: 'This answer is too common for the selected question. Please choose something more unique.'
+            };
+        }
+    }
+    
+    // Weak answers for "pet name" questions
+    if (questionLower.includes('pet')) {
+        const weakPetNames = ['fluffy', 'spot', 'max', 'bella', 'buddy', 'charlie', 'lucy', 'dog', 'cat'];
+        if (weakPetNames.includes(answerLower)) {
+            return {
+                valid: false,
+                message: 'This answer is too common for the selected question. Please choose something more unique.'
+            };
+        }
+    }
+    
+    // Generic weak answers that should always be rejected (obviously guessable)
+    const alwaysWeakAnswers = ['123', '1234', 'password', 'admin', 'test', 'abc', 'qwerty'];
+    if (alwaysWeakAnswers.includes(answerLower)) {
+        return {
+            valid: false,
+            message: 'Security answer is too weak. Please choose a more secure answer.'
         };
     }
     
