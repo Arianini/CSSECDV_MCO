@@ -222,10 +222,10 @@ function canChangePassword(user) {
     
     // NOTE: Changed to 1 minute (0.0007 days) for demo purposes
     // Production should be 1 day (1)
-    if (daysSinceChange < 0.0007) {
+    if (daysSinceChange < 1) {
         return {
             allowed: false,
-            message: 'Password can only be changed once per minute. Please try again shortly.'
+            message: 'Password can only be changed once per day. Please try again shortly.'
         };
     }
     
