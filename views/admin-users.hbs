@@ -123,10 +123,13 @@
                     <label for="newPassword">
                         <i class="fas fa-lock"></i> Password
                     </label>
-                    <input type="password" id="newPassword" required 
-                           placeholder="Enter password"
-                           minlength="8"
-                           oninput="validatePasswordStrength()">
+                    <div class="password-container">
+                        <input type="password" id="newPassword" required 
+                               placeholder="Enter password"
+                               minlength="8"
+                               oninput="validatePasswordStrength()">
+                        <i id="toggle-eye-newPassword" class="fa-solid fa-eye-slash" onclick="togglePasswordVisibility('newPassword')"></i>
+                    </div>
                     <div id="passwordRequirements" class="password-requirements">
                         <div class="requirement" id="req-length">
                             <i class="fas fa-circle"></i> At least 8 characters
@@ -144,6 +147,20 @@
                             <i class="fas fa-circle"></i> One special character (!@#$%^&*()_+-=[]{}|)
                         </div>
                     </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirmPassword">
+                        <i class="fas fa-lock"></i> Confirm Password
+                    </label>
+                    <div class="password-container">
+                        <input type="password" id="confirmPassword" required 
+                               placeholder="Re-enter password"
+                               minlength="8"
+                               oninput="validatePasswordMatch()">
+                        <i id="toggle-eye-confirmPassword" class="fa-solid fa-eye-slash" onclick="togglePasswordVisibility('confirmPassword')"></i>
+                    </div>
+                    <small id="passwordMatchMessage" style="color: #888;"></small>
                 </div>
                 
                 <div class="form-group">
@@ -181,7 +198,7 @@
                     <label for="newManagedTags">
                         <i class="fas fa-tags"></i> Managed Tags
                     </label>
-                    <select id="newManagedTags" multiple size="10" style="height: auto;">
+                    <select id="newManagedTags" multiple size="6">
                         <option value="Food">🍔 Food</option>
                         <option value="Coffee">☕ Coffee</option>
                         <option value="Baking">🍰 Baking</option>

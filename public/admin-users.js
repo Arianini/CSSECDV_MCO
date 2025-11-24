@@ -41,6 +41,7 @@ async function createUser(event) {
     const role = document.getElementById('newUserRole').value;
     const username = document.getElementById('newUsername').value;
     const password = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
     const userTag = document.getElementById('newUserTag').value;
     const securityQuestion = document.getElementById('newSecurityQuestion').value;
     const securityAnswer = document.getElementById('newSecurityAnswer').value;
@@ -48,6 +49,12 @@ async function createUser(event) {
     // Get selected tags from multi-select
     const managedTagsSelect = document.getElementById('newManagedTags');
     const managedTags = Array.from(managedTagsSelect.selectedOptions).map(option => option.value);
+    
+    // Validate passwords match
+    if (password !== confirmPassword) {
+        showNotification('Error', 'Passwords do not match', 'error');
+        return;
+    }
     
     // Validate password
     if (!validatePassword(password)) {
@@ -127,6 +134,48 @@ function validatePasswordStrength() {
     updateRequirement('req-lowercase', hasLowerCase);
     updateRequirement('req-number', hasNumber);
     updateRequirement('req-special', hasSpecialChar);
+    
+    // Also check password match if confirm field has value
+    validatePasswordMatch();
+}
+
+// Validate password match
+function validatePasswordMatch() {
+    const password = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    const messageElement = document.getElementById('passwordMatchMessage');
+    
+    if (confirmPassword.length === 0) {
+        messageElement.textContent = '';
+        messageElement.style.color = '#888';
+        return true;
+    }
+    
+    if (password === confirmPassword) {
+        messageElement.textContent = '✓ Passwords match';
+        messageElement.style.color = '#28a745';
+        return true;
+    } else {
+        messageElement.textContent = '✗ Passwords do not match';
+        messageElement.style.color = '#dc3545';
+        return false;
+    }
+}
+
+// Toggle password visibility
+function togglePasswordVisibility(field) {
+    let passwordField = document.getElementById(field);
+    let eyeIcon = document.getElementById('toggle-eye-' + field);
+
+    if (passwordField.type === 'password') {
+        passwordField.type = 'text'; 
+        eyeIcon.classList.remove('fa-eye-slash');  
+        eyeIcon.classList.add('fa-eye');  
+    } else {
+        passwordField.type = 'password'; 
+        eyeIcon.classList.remove('fa-eye');
+        eyeIcon.classList.add('fa-eye-slash');  
+    }
 }
 
 // Update requirement UI

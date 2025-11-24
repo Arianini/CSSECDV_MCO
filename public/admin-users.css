@@ -6,6 +6,7 @@
 .admin-container {
     max-width: 1400px;
     margin: 20px auto;
+    margin-bottom: 60px;
     padding: 0 20px;
 }
 
@@ -239,12 +240,15 @@
 
 .modal-content {
     background: #1f1f1f;
-    margin: 5% auto;
+    margin: 2% auto;
     max-width: 600px;
+    max-height: 90vh;
     border-radius: 10px;
     box-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
     animation: slideDown 0.3s ease-out;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 @keyframes slideDown {
@@ -293,6 +297,28 @@
 /* Form Styles */
 form {
     padding: 25px;
+    padding-bottom: 40px;
+    overflow-y: auto;
+    max-height: calc(90vh - 80px);
+}
+
+/* Custom scrollbar for form */
+form::-webkit-scrollbar {
+    width: 8px;
+}
+
+form::-webkit-scrollbar-track {
+    background: #2a2a2a;
+    border-radius: 10px;
+}
+
+form::-webkit-scrollbar-thumb {
+    background: #007BFF;
+    border-radius: 10px;
+}
+
+form::-webkit-scrollbar-thumb:hover {
+    background: #0056b3;
 }
 
 .form-group {
@@ -318,6 +344,7 @@ form {
     border-radius: 5px;
     font-size: 14px;
     transition: all 0.3s ease;
+    box-sizing: border-box;
 }
 
 .form-group input:focus,
@@ -335,9 +362,37 @@ form {
     margin-top: 5px;
 }
 
+/* Password container styling */
+.password-container {
+    position: relative;
+    width: 100%;
+}
+
+.password-container input {
+    width: 100%;
+    padding: 12px;
+    padding-right: 45px;
+    box-sizing: border-box;
+}
+
+.password-container i {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #bbb;
+    font-size: 18px;
+    transition: color 0.2s ease;
+}
+
+.password-container i:hover {
+    color: #007BFF;
+}
+
 /* Multi-select for managed tags */
 .form-group select[multiple] {
-    height: 200px;
+    height: 150px;
     padding: 8px;
 }
 
