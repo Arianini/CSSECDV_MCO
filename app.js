@@ -1964,7 +1964,10 @@ server.delete('/admin/users/:userId', isAdministrator, async (req, res) => {
     const { userId } = req.params;
 
     try {
+        // Prevent self-deletion
         if (userId === req.session.userId) {
+            await logActivity(req.session.userId, 'AUTHORIZATION_FAILED', 'USER_DELETE', userId, 
+                             'Attempted to delete own account', getClientIp(req));
             return res.status(400).json({ error: "You cannot delete your own account" });
         }
 
@@ -1973,11 +1976,23 @@ server.delete('/admin/users/:userId', isAdministrator, async (req, res) => {
             return res.status(404).json({ error: "User not found" });
         }
 
+        // Prevent deleting the last administrator
+        if (user.role === 'administrator') {
+            const adminCount = await User.countDocuments({ role: 'administrator' });
+            if (adminCount <= 1) {
+                await logActivity(req.session.userId, 'AUTHORIZATION_FAILED', 'USER_DELETE', userId, 
+                                 'Attempted to delete the last administrator account', getClientIp(req));
+                return res.status(400).json({ 
+                    error: "Cannot delete the last administrator account. System requires at least one administrator." 
+                });
+            }
+        }
+
         await Post.deleteMany({ user: userId });
         await User.findByIdAndDelete(userId);
 
         await logActivity(req.session.userId, 'DELETE_USER', 'USER', userId, 
-                         `Deleted user account: ${user.username}`, getClientIp(req));
+                         `Deleted user account: ${user.username} (${user.role})`, getClientIp(req));
 
         res.json({ success: true, message: "User deleted successfully" });
     } catch (err) {

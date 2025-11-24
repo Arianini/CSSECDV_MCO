@@ -77,7 +77,7 @@
                                     <i class="fas fa-user-tag"></i> Change Role
                                 </button>
                                 
-                                {{#unless (eq role 'administrator')}}
+                                {{#unless (eq username ../currentUser.username)}}
                                     <button class="btn-small btn-danger" onclick="showDeleteModal('{{_id}}', '{{username}}')">
                                         <i class="fas fa-trash"></i> Delete
                                     </button>
@@ -179,11 +179,21 @@
                 
                 <div class="form-group" id="managedTagsGroup">
                     <label for="newManagedTags">
-                        <i class="fas fa-tags"></i> Managed Tags (comma-separated)
+                        <i class="fas fa-tags"></i> Managed Tags
                     </label>
-                    <input type="text" id="newManagedTags" 
-                           placeholder="e.g., Food, Travel, Gaming">
-                    <small>Optional: Tags this manager can moderate</small>
+                    <select id="newManagedTags" multiple size="10" style="height: auto;">
+                        <option value="Food">🍔 Food</option>
+                        <option value="Coffee">☕ Coffee</option>
+                        <option value="Baking">🍰 Baking</option>
+                        <option value="Travel">✈️ Travel</option>
+                        <option value="Gaming">🎮 Gaming</option>
+                        <option value="Technology">💻 Technology</option>
+                        <option value="Sports">⚽ Sports</option>
+                        <option value="Music">🎵 Music</option>
+                        <option value="Art">🎨 Art</option>
+                        <option value="General">💬 General</option>
+                    </select>
+                    <small>Hold Ctrl (Cmd on Mac) to select multiple tags. Manager can only moderate selected tags.</small>
                 </div>
                 
                 <button type="submit" class="btn btn-primary btn-full">

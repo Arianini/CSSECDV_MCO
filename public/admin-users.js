@@ -44,8 +44,10 @@ async function createUser(event) {
     const userTag = document.getElementById('newUserTag').value;
     const securityQuestion = document.getElementById('newSecurityQuestion').value;
     const securityAnswer = document.getElementById('newSecurityAnswer').value;
-    const managedTagsInput = document.getElementById('newManagedTags').value;
-    const managedTags = managedTagsInput ? managedTagsInput.split(',').map(t => t.trim()) : [];
+    
+    // Get selected tags from multi-select
+    const managedTagsSelect = document.getElementById('newManagedTags');
+    const managedTags = Array.from(managedTagsSelect.selectedOptions).map(option => option.value);
     
     // Validate password
     if (!validatePassword(password)) {

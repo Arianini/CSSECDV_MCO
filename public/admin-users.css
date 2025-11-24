@@ -335,6 +335,29 @@ form {
     margin-top: 5px;
 }
 
+/* Multi-select for managed tags */
+.form-group select[multiple] {
+    height: 200px;
+    padding: 8px;
+}
+
+.form-group select[multiple] option {
+    padding: 8px 12px;
+    margin: 2px 0;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.form-group select[multiple] option:hover {
+    background: #007BFF;
+}
+
+.form-group select[multiple] option:checked {
+    background: #0056b3;
+    color: white;
+    font-weight: bold;
+}
+
 /* Buttons */
 .btn {
     padding: 12px 20px;
