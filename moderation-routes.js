@@ -5,8 +5,17 @@
 const { Report, UserRestriction, PostModeration } = require('./moderation-schemas');
 const { User, Post, ActivityLog } = require('./database');
 
+// Helper function to get client IP
+function getClientIp(req) {
+    return req.headers['x-forwarded-for'] || 
+           req.connection.remoteAddress || 
+           req.socket.remoteAddress ||
+           req.connection.socket?.remoteAddress ||
+           'unknown';
+}
+
 // Helper function for logging
-async function logModerationAction(userId, action, details) {
+async function logModerationAction(userId, action, details, ipAddress = 'unknown') {
     try {
         const user = await User.findById(userId);
         await ActivityLog.create({
@@ -15,6 +24,7 @@ async function logModerationAction(userId, action, details) {
             action: action,
             targetType: 'MODERATION',
             details: details,
+            ipAddress: ipAddress,
             timestamp: new Date()
         });
     } catch (error) {
@@ -97,7 +107,7 @@ app.post('/report/post/:postId', requireAuth, async (req, res) => {
         });
         
         // Log the report
-        await logModerationAction(userId, 'USER_REPORT', `Reported post ${postId} for: ${reason}`);
+        await logModerationAction(userId, 'USER_REPORT', `Reported post ${postId} for: ${reason}`, getClientIp(req));
         
         res.json({ success: true, message: 'Report submitted successfully' });
         
@@ -174,9 +184,12 @@ app.post('/manager/reports/:reportId/handle', requireAuth, requireRole(['manager
         switch(action) {
             case 'hide_post':
                 // Hide the post
+                const hideReason = notes || 'Violates community guidelines';
                 await Post.findByIdAndUpdate(report.post._id, {
                     isHidden: true,
-                    hiddenReason: notes || 'Violates community guidelines'
+                    hiddenReason: hideReason,
+                    hiddenBy: managerId,
+                    hiddenAt: new Date()
                 });
                 
                 // Log moderation action
@@ -195,7 +208,7 @@ app.post('/manager/reports/:reportId/handle', requireAuth, requireRole(['manager
                     resolvedAt: new Date()
                 });
                 
-                await logModerationAction(managerId, 'HIDE_POST', `Hid post ${report.post._id}`);
+                await logModerationAction(managerId, 'HIDE_POST', `Hid post ${report.post._id}. Reason: "${hideReason}". Changed isHidden: false → true`, getClientIp(req));
                 break;
                 
             case 'delete_post':
@@ -218,7 +231,7 @@ app.post('/manager/reports/:reportId/handle', requireAuth, requireRole(['manager
                     resolvedAt: new Date()
                 });
                 
-                await logModerationAction(managerId, 'DELETE_POST', `Deleted post ${report.post._id}`);
+                await logModerationAction(managerId, 'DELETE_POST', `Deleted post ${report.post._id}`, getClientIp(req));
                 break;
                 
             case 'warn_user':
@@ -239,7 +252,7 @@ app.post('/manager/reports/:reportId/handle', requireAuth, requireRole(['manager
                     resolvedAt: new Date()
                 });
                 
-                await logModerationAction(managerId, 'WARN_USER', `Warned user ${postAuthorId}`);
+                await logModerationAction(managerId, 'WARN_USER', `Warned user ${postAuthorId}`, getClientIp(req));
                 break;
                 
             case 'restrict_user':
@@ -265,7 +278,7 @@ app.post('/manager/reports/:reportId/handle', requireAuth, requireRole(['manager
                     resolvedAt: new Date()
                 });
                 
-                await logModerationAction(managerId, 'RESTRICT_USER', `Restricted user ${postAuthorId} for 48 hours`);
+                await logModerationAction(managerId, 'RESTRICT_USER', `Restricted user ${postAuthorId} for 48 hours`, getClientIp(req));
                 break;
                 
             case 'dismiss':
@@ -277,7 +290,7 @@ app.post('/manager/reports/:reportId/handle', requireAuth, requireRole(['manager
                     resolvedAt: new Date()
                 });
                 
-                await logModerationAction(managerId, 'DISMISS_REPORT', `Dismissed report ${reportId}`);
+                await logModerationAction(managerId, 'DISMISS_REPORT', `Dismissed report ${reportId}`, getClientIp(req));
                 break;
                 
             default:
@@ -312,7 +325,7 @@ app.post('/manager/reports/:reportId/escalate', requireAuth, requireRole('manage
             adminNotes: `Escalated by manager: ${reason}`
         });
         
-        await logModerationAction(req.session.userId, 'ESCALATE_REPORT', `Escalated report ${reportId} to admin`);
+        await logModerationAction(req.session.userId, 'ESCALATE_REPORT', `Escalated report ${reportId} to admin`, getClientIp(req));
         
         res.json({ success: true, message: 'Report escalated to administrator' });
         
@@ -398,7 +411,8 @@ app.post('/admin/users/:userId/ban', requireAuth, requireRole('administrator'), 
             isActive: true
         });
         
-        await logModerationAction(req.session.userId, 'PERMANENT_BAN', `Permanently banned user ${userId}`);
+        await logModerationAction(req.session.userId, 'PERMANENT_BAN', 
+            `Permanently banned user ${userId}. Reason: "${reason || 'Violated community guidelines'}". Restriction type: permanent_ban, isActive: false → true`);
         
         console.log('User banned successfully');
         res.json({ success: true, message: 'User permanently banned' });
@@ -421,7 +435,8 @@ app.post('/admin/users/:userId/unban', requireAuth, requireRole('administrator')
             { isActive: false }
         );
         
-        await logModerationAction(req.session.userId, 'UNBAN_USER', `Unbanned user ${userId}`);
+        await logModerationAction(req.session.userId, 'UNBAN_USER', 
+            `Unbanned user ${userId}. Changed isActive: true → false for restriction ${restriction._id}`);
         
         res.json({ success: true, message: 'User unbanned successfully' });
         
@@ -474,7 +489,8 @@ app.post('/admin/users/:userId/restrict', requireAuth, requireRole('administrato
             isActive: true
         });
         
-        await logModerationAction(req.session.userId, 'RESTRICT_USER', `Temporarily restricted user ${userId} for ${hoursNum} hours`);
+        await logModerationAction(req.session.userId, 'RESTRICT_USER', 
+            `Temporarily restricted user ${userId}. Duration: ${hoursNum} hours. Reason: "${reason || 'Temporary restriction'}". End date: ${endDate.toISOString()}. isActive: false → true`);
         
         console.log('User restricted successfully');
         res.json({ success: true, message: 'User restricted successfully' });
@@ -508,7 +524,7 @@ app.post('/admin/create-manager', requireAuth, requireRole('administrator'), asy
             managedTags: managedTags || []
         });
         
-        await logModerationAction(req.session.userId, 'CREATE_MANAGER', `Created manager account: ${username}`);
+        await logModerationAction(req.session.userId, 'CREATE_MANAGER', `Created manager account: ${username}`, getClientIp(req));
         
         res.json({ success: true, message: 'Manager account created successfully' });
         
@@ -539,7 +555,7 @@ app.post('/admin/create-admin', requireAuth, requireRole('administrator'), async
             role: 'administrator'
         });
         
-        await logModerationAction(req.session.userId, 'CREATE_ADMIN', `Created administrator account: ${username}`);
+        await logModerationAction(req.session.userId, 'CREATE_ADMIN', `Created administrator account: ${username}`, getClientIp(req));
         
         res.json({ success: true, message: 'Administrator account created successfully' });
         
@@ -557,7 +573,7 @@ app.post('/admin/users/:userId/role', requireAuth, requireRole('administrator'),
         
         await User.findByIdAndUpdate(userId, { role });
         
-        await logModerationAction(req.session.userId, 'CHANGE_ROLE', `Changed user ${userId} role to ${role}`);
+        await logModerationAction(req.session.userId, 'CHANGE_ROLE', `Changed user ${userId} role to ${role}`, getClientIp(req));
         
         res.json({ success: true, message: 'User role updated successfully' });
         
@@ -579,7 +595,7 @@ app.delete('/admin/users/:userId', requireAuth, requireRole('administrator'), as
         
         await User.findByIdAndDelete(userId);
         
-        await logModerationAction(req.session.userId, 'DELETE_USER', `Deleted user account ${userId}`);
+        await logModerationAction(req.session.userId, 'DELETE_USER', `Deleted user account ${userId}`, getClientIp(req));
         
         res.json({ success: true, message: 'User deleted successfully' });
         
