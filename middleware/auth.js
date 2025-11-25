@@ -784,12 +784,15 @@ async function logActivity(userId, action, targetType = '', targetId = '', detai
             if (user) {
                 username = user.username;
             }
+        } else if (targetId && action === 'FAILED_LOGIN') {
+            // For failed login attempts with unknown users, format as "Unknown user 'username'"
+            username = `Unknown user '${targetId}'`;
         } else if (targetId) {
             username = targetId;
         }
         
         const log = new ActivityLog({
-            user: userId,
+            user: userId || null, // Explicitly set to null if undefined
             username: username,
             action,
             targetType,
@@ -799,7 +802,7 @@ async function logActivity(userId, action, targetType = '', targetId = '', detai
         });
         await log.save();
     } catch (err) {
-        console.error('Error logging activity:', err);
+        // Silently fail - no console output for expected cases like unknown users
     }
 }
 
