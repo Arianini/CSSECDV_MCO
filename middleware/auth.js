@@ -665,18 +665,46 @@ async function checkUserPermission(user, userId, action) {
 async function canModeratePost(userId, postId) {
     try {
         const user = await User.findById(userId);
-        if (!user) return false;
+        if (!user) {
+            console.log('[canModeratePost] User not found:', userId);
+            return false;
+        }
         
-        if (user.role === 'administrator') return true;
-        if (user.role === 'user') return false;
+        console.log('[canModeratePost] Checking user:', {
+            userId,
+            role: user.role,
+            managedTags: user.managedTags
+        });
+        
+        if (user.role === 'administrator') {
+            console.log('[canModeratePost] User is admin - ALLOWED');
+            return true;
+        }
+        
+        if (user.role === 'user') {
+            console.log('[canModeratePost] User is regular user - DENIED');
+            return false;
+        }
         
         if (user.role === 'manager') {
             const Post = require('../database').Post;
             const post = await Post.findById(postId);
-            if (!post) return false;
-            return user.managedTags.includes(post.postTag);
+            if (!post) {
+                console.log('[canModeratePost] Post not found:', postId);
+                return false;
+            }
+            
+            const canModerate = user.managedTags.includes(post.postTag);
+            console.log('[canModeratePost] Manager check:', {
+                postTag: post.postTag,
+                managedTags: user.managedTags,
+                canModerate
+            });
+            
+            return canModerate;
         }
         
+        console.log('[canModeratePost] Unknown role - DENIED');
         return false;
     } catch (err) {
         console.error('Error checking moderation permission:', err);
@@ -705,15 +733,38 @@ async function canModerateTag(userId, tag) {
 async function canEditOrDelete(userId, resourceOwnerId, postId = null) {
     try {
         const user = await User.findById(userId);
-        if (!user) return false;
-        
-        if (userId.toString() === resourceOwnerId.toString()) return true;
-        if (user.role === 'administrator') return true;
-        
-        if (user.role === 'manager' && postId) {
-            return await canModeratePost(userId, postId);
+        if (!user) {
+            console.log('[canEditOrDelete] User not found:', userId);
+            return false;
         }
         
+        console.log('[canEditOrDelete] Checking:', {
+            userId: userId.toString(),
+            resourceOwnerId: resourceOwnerId.toString(),
+            postId,
+            userRole: user.role
+        });
+        
+        // Owner can always edit/delete their own content
+        if (userId.toString() === resourceOwnerId.toString()) {
+            console.log('[canEditOrDelete] User is owner - ALLOWED');
+            return true;
+        }
+        
+        // Admin can edit/delete anything
+        if (user.role === 'administrator') {
+            console.log('[canEditOrDelete] User is admin - ALLOWED');
+            return true;
+        }
+        
+        // Manager can edit/delete if they moderate the post's tag
+        if (user.role === 'manager' && postId) {
+            const canModerate = await canModeratePost(userId, postId);
+            console.log('[canEditOrDelete] Manager moderation check:', canModerate);
+            return canModerate;
+        }
+        
+        console.log('[canEditOrDelete] No permission - DENIED');
         return false;
     } catch (err) {
         console.error('Error checking edit/delete permission:', err);

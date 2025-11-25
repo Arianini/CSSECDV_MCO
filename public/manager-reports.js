@@ -2,15 +2,72 @@
 // MANAGER REPORTS DASHBOARD JAVASCRIPT
 // ============================================
 
-console.log('Manager Reports JS loaded');
+
 
 // Global variables for modal state
 let currentReportId = null;
 let currentAction = null;
 
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+
+    updateStats();
+    
+    // Set default filter to pending
+    const statusFilter = document.getElementById('statusFilter');
+    if (statusFilter) {
+        statusFilter.value = 'pending';
+        filterReports();
+    }
+    
+    // Add event listeners using event delegation
+    setupEventListeners();
+});
+
+// Setup event listeners
+function setupEventListeners() {
+    // Handle action buttons using event delegation
+    document.addEventListener('click', (e) => {
+        // Check if clicked element is an action button
+        if (e.target.closest('.btn-action')) {
+            const button = e.target.closest('.btn-action');
+            const action = button.getAttribute('data-action');
+            const reportCard = button.closest('.report-card');
+            const reportId = reportCard.getAttribute('data-report-id');
+            
+
+            handleReport(reportId, action);
+        }
+        
+        // Check if clicked element is escalate button
+        if (e.target.closest('.btn-escalate-action')) {
+            const button = e.target.closest('.btn-escalate-action');
+            const reportCard = button.closest('.report-card');
+            const reportId = reportCard.getAttribute('data-report-id');
+            
+
+            escalateReport(reportId);
+        }
+        
+        // Check if clicked element is view post button
+        if (e.target.closest('.btn-view-post')) {
+            const button = e.target.closest('.btn-view-post');
+            const postId = button.getAttribute('data-post-id');
+            const username = button.getAttribute('data-username');
+            const caption = button.getAttribute('data-caption');
+            const imageUrl = button.getAttribute('data-image-url');
+            const postTag = button.getAttribute('data-post-tag');
+            const createdAt = button.getAttribute('data-created-at');
+            
+
+            viewFullPost(postId, username, caption, imageUrl, postTag, createdAt);
+        }
+    });
+}
+
 // View full post in modal
 function viewFullPost(postId, username, caption, imageUrl, postTag, createdAt) {
-    console.log('viewFullPost called', { postId, username, caption, imageUrl, postTag, createdAt });
+
     
     const modal = document.getElementById('postViewModal');
     const modalImage = document.getElementById('modalPostImage');
@@ -48,7 +105,7 @@ function viewFullPost(postId, username, caption, imageUrl, postTag, createdAt) {
 
 // Close post modal
 function closePostModal() {
-    console.log('closePostModal called');
+
     const modal = document.getElementById('postViewModal');
     modal.style.display = 'none';
     document.body.style.overflow = 'auto';
@@ -56,7 +113,7 @@ function closePostModal() {
 
 // Show custom action modal
 function showActionModal(reportId, action) {
-    console.log('showActionModal called', { reportId, action });
+
     
     currentReportId = reportId;
     currentAction = action;
@@ -65,29 +122,59 @@ function showActionModal(reportId, action) {
         'hide_post': 'Hide this post',
         'delete_post': 'Delete this post',
         'warn_user': 'Warn the user',
-        'restrict_user': 'Restrict user for 48 hours',
+        'restrict_user': 'Restrict user (up to 48 hours)',
         'dismiss': 'Dismiss this report'
     };
     
     const modal = document.createElement('div');
     modal.className = 'custom-modal';
-    modal.innerHTML = `
-        <div class="custom-modal-overlay" onclick="closeActionModal()"></div>
-        <div class="custom-modal-content">
-            <h3>Confirm Action</h3>
-            <p>Action: <strong>${actionMessages[action]}</strong></p>
-            <label for="actionNotes">Enter notes for this action:</label>
-            <textarea id="actionNotes" rows="4" placeholder="Provide detailed notes about this action..." required></textarea>
-            <div class="custom-modal-buttons">
-                <button class="btn-cancel" onclick="closeActionModal()">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
-                <button class="btn-confirm" onclick="confirmAction()">
-                    <i class="fas fa-check"></i> Confirm
-                </button>
+    
+    // Special handling for restrict_user action
+    if (action === 'restrict_user') {
+        modal.innerHTML = `
+            <div class="custom-modal-overlay" onclick="closeActionModal()"></div>
+            <div class="custom-modal-content">
+                <h3>Restrict User</h3>
+                <p>Action: <strong>${actionMessages[action]}</strong></p>
+                <label for="restrictDuration">Restriction Duration:</label>
+                <select id="restrictDuration" class="duration-select">
+                    <option value="1">1 hour</option>
+                    <option value="6">6 hours</option>
+                    <option value="12">12 hours</option>
+                    <option value="24" selected>24 hours</option>
+                    <option value="48">48 hours</option>
+                </select>
+                <label for="actionNotes">Enter reason for this restriction:</label>
+                <textarea id="actionNotes" rows="4" placeholder="Provide detailed reason for restriction..." required></textarea>
+                <div class="custom-modal-buttons">
+                    <button class="btn-cancel" onclick="closeActionModal()">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button class="btn-confirm" onclick="confirmAction()">
+                        <i class="fas fa-check"></i> Confirm
+                    </button>
+                </div>
             </div>
-        </div>
-    `;
+        `;
+    } else {
+        modal.innerHTML = `
+            <div class="custom-modal-overlay" onclick="closeActionModal()"></div>
+            <div class="custom-modal-content">
+                <h3>Confirm Action</h3>
+                <p>Action: <strong>${actionMessages[action]}</strong></p>
+                <label for="actionNotes">Enter notes for this action:</label>
+                <textarea id="actionNotes" rows="4" placeholder="Provide detailed notes about this action..." required></textarea>
+                <div class="custom-modal-buttons">
+                    <button class="btn-cancel" onclick="closeActionModal()">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button class="btn-confirm" onclick="confirmAction()">
+                        <i class="fas fa-check"></i> Confirm
+                    </button>
+                </div>
+            </div>
+        `;
+    }
     
     document.body.appendChild(modal);
     document.body.style.overflow = 'hidden';
@@ -103,7 +190,7 @@ function showActionModal(reportId, action) {
 
 // Close action modal
 function closeActionModal() {
-    console.log('closeActionModal called');
+
     const modal = document.querySelector('.custom-modal');
     if (modal) {
         modal.remove();
@@ -115,7 +202,7 @@ function closeActionModal() {
 
 // Confirm action
 async function confirmAction() {
-    console.log('confirmAction called');
+
     const notes = document.getElementById('actionNotes').value.trim();
     
     if (!notes) {
@@ -123,37 +210,60 @@ async function confirmAction() {
         return;
     }
     
+    // Get duration if restricting user
+    let hours = null;
+    if (currentAction === 'restrict_user') {
+        const durationSelect = document.getElementById('restrictDuration');
+        hours = durationSelect ? durationSelect.value : '24';
+    }
+    
+    // *** FIX: Save values BEFORE closing modal ***
+    const reportId = currentReportId;
+    const action = currentAction;
+    
     closeActionModal();
-    await executeAction(currentReportId, currentAction, notes);
+    await executeAction(reportId, action, notes, hours);
 }
 
 // Execute the action
-async function executeAction(reportId, action, notes) {
-    console.log('executeAction called', { reportId, action, notes });
+async function executeAction(reportId, action, notes, hours = null) {
+
+    
+    if (!reportId || reportId === 'null' || reportId === 'undefined') {
+        showNotification('Error', 'Invalid report ID', 'error');
+        return;
+    }
+    
     showNotification('Processing...', 'Please wait', 'info');
     
     try {
         const url = `/manager/reports/${reportId}/handle`;
-        console.log('Fetching:', url);
+
+        
+        const body = { action, notes };
+        if (hours && action === 'restrict_user') {
+            body.hours = hours;
+        }
         
         const response = await fetch(url, {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ action, notes })
+            credentials: 'same-origin',
+            body: JSON.stringify(body)
         });
         
-        console.log('Response status:', response.status);
+
         
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('Error response:', errorText);
+
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const data = await response.json();
-        console.log('Response data:', data);
+
         
         if (data.success) {
             showNotification('Success!', data.message || 'Action completed successfully', 'success');
@@ -162,20 +272,33 @@ async function executeAction(reportId, action, notes) {
             showNotification('Error', data.error || 'Failed to handle report', 'error');
         }
     } catch (error) {
-        console.error('Error in executeAction:', error);
+
         showNotification('Error', 'Failed to handle report: ' + error.message, 'error');
     }
 }
 
 // Handle report action (wrapper function)
 function handleReport(reportId, action) {
-    console.log('handleReport called', { reportId, action });
+
+    
+    if (!reportId || reportId === 'null' || reportId === 'undefined') {
+        showNotification('Error', 'Invalid report ID', 'error');
+
+        return;
+    }
+    
     showActionModal(reportId, action);
 }
 
 // Escalate report to admin
 function escalateReport(reportId) {
-    console.log('escalateReport called', { reportId });
+
+    
+    if (!reportId || reportId === 'null' || reportId === 'undefined') {
+        showNotification('Error', 'Invalid report ID', 'error');
+
+        return;
+    }
     
     const modal = document.createElement('div');
     modal.className = 'custom-modal';
@@ -210,7 +333,7 @@ function escalateReport(reportId) {
 
 // Close escalate modal
 function closeEscalateModal() {
-    console.log('closeEscalateModal called');
+
     const modal = document.querySelector('.custom-modal');
     if (modal) {
         modal.remove();
@@ -220,7 +343,7 @@ function closeEscalateModal() {
 
 // Confirm escalation
 async function confirmEscalate(reportId) {
-    console.log('confirmEscalate called', { reportId });
+
     const reason = document.getElementById('escalateReason').value.trim();
     
     if (!reason) {
@@ -233,26 +356,27 @@ async function confirmEscalate(reportId) {
     
     try {
         const url = `/manager/reports/${reportId}/escalate`;
-        console.log('Fetching:', url);
+
         
         const response = await fetch(url, {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json'
             },
+            credentials: 'same-origin',
             body: JSON.stringify({ reason })
         });
         
-        console.log('Response status:', response.status);
+
         
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('Error response:', errorText);
+
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const data = await response.json();
-        console.log('Response data:', data);
+
         
         if (data.success) {
             showNotification('Success!', 'Report escalated to admin', 'success');
@@ -261,72 +385,36 @@ async function confirmEscalate(reportId) {
             showNotification('Error', data.error || 'Failed to escalate report', 'error');
         }
     } catch (error) {
-        console.error('Error in confirmEscalate:', error);
+
         showNotification('Error', 'Failed to escalate report: ' + error.message, 'error');
     }
 }
 
-// Filter reports
+// Filter reports by status
 function filterReports() {
-    console.log('filterReports called');
-    const statusFilter = document.getElementById('statusFilter');
-    const reasonFilter = document.getElementById('reasonFilter');
-    
-    if (!statusFilter || !reasonFilter) {
-        console.error('Filter elements not found');
-        return;
-    }
-    
-    const statusValue = statusFilter.value;
-    const reasonValue = reasonFilter.value;
-    
-    console.log('Filtering by:', { statusValue, reasonValue });
-    
+
+    const statusFilter = document.getElementById('statusFilter').value;
+    const searchTerm = document.getElementById('searchReports') ? document.getElementById('searchReports').value.toLowerCase() : '';
     const reportCards = document.querySelectorAll('.report-card');
-    let visibleCount = 0;
     
     reportCards.forEach(card => {
-        const cardStatus = card.getAttribute('data-status');
-        const cardReason = card.getAttribute('data-reason');
+        const status = card.getAttribute('data-status');
+        const reportText = card.textContent.toLowerCase();
         
-        const statusMatch = statusValue === 'all' || cardStatus === statusValue;
-        const reasonMatch = reasonValue === 'all' || cardReason === reasonValue;
+        const statusMatch = statusFilter === 'all' || status === statusFilter;
+        const searchMatch = !searchTerm || reportText.includes(searchTerm);
         
-        if (statusMatch && reasonMatch) {
+        if (statusMatch && searchMatch) {
             card.style.display = 'block';
-            visibleCount++;
         } else {
             card.style.display = 'none';
         }
     });
-    
-    console.log('Visible reports:', visibleCount);
-    
-    // Show/hide no reports message
-    const reportsList = document.querySelector('.reports-list');
-    const noReportsDiv = document.querySelector('.no-reports');
-    
-    if (visibleCount === 0) {
-        if (!noReportsDiv) {
-            const filterMessage = document.createElement('div');
-            filterMessage.className = 'no-reports';
-            filterMessage.innerHTML = `
-                <i class="fas fa-filter"></i>
-                <h2>No Reports Match Filters</h2>
-                <p>Try adjusting your filter settings.</p>
-            `;
-            reportsList.appendChild(filterMessage);
-        }
-    } else {
-        if (noReportsDiv && reportCards.length > 0) {
-            noReportsDiv.remove();
-        }
-    }
 }
 
 // Show notification
-function showNotification(title, message, type) {
-    console.log('showNotification called', { title, message, type });
+function showNotification(title, message, type = 'info') {
+
     
     // Remove existing notifications
     const existingNotifications = document.querySelectorAll('.notification');
@@ -358,7 +446,7 @@ function showNotification(title, message, type) {
 
 // Calculate and display statistics
 function updateStats() {
-    console.log('updateStats called');
+
     const reportCards = document.querySelectorAll('.report-card');
     let pendingCount = 0;
     let resolvedCount = 0;
@@ -372,7 +460,7 @@ function updateStats() {
         }
     });
     
-    console.log('Stats:', { pendingCount, resolvedCount });
+
     
     // Update stat numbers if elements exist
     const pendingStat = document.querySelector('.stat-card.pending .stat-number');
@@ -381,19 +469,6 @@ function updateStats() {
     if (pendingStat) pendingStat.textContent = pendingCount;
     if (resolvedStat) resolvedStat.textContent = resolvedCount;
 }
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM Content Loaded');
-    updateStats();
-    
-    // Set default filter to pending
-    const statusFilter = document.getElementById('statusFilter');
-    if (statusFilter) {
-        statusFilter.value = 'pending';
-        filterReports();
-    }
-});
 
 // Close modals when clicking outside
 window.addEventListener('click', (event) => {
@@ -526,6 +601,25 @@ notificationStyles.textContent = `
         font-weight: bold;
     }
     
+    .custom-modal-content .duration-select {
+        width: 100%;
+        padding: 12px;
+        background: #2a2a2a;
+        border: 1px solid #444;
+        color: white;
+        border-radius: 5px;
+        font-size: 14px;
+        font-family: inherit;
+        margin-bottom: 20px;
+        cursor: pointer;
+    }
+    
+    .custom-modal-content .duration-select:focus {
+        outline: none;
+        border-color: #007BFF;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+    }
+    
     .custom-modal-content textarea {
         width: 100%;
         padding: 12px;
@@ -587,5 +681,3 @@ notificationStyles.textContent = `
     }
 `;
 document.head.appendChild(notificationStyles);
-
-console.log('Manager Reports JS initialization complete');

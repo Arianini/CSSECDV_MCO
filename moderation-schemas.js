@@ -21,6 +21,7 @@ const reportSchema = new mongoose.Schema({
     adminNotes: { type: String, default: '' },
     createdAt: { type: Date, default: Date.now },
     resolvedAt: { type: Date, default: null }
+    // Note: Posts use soft delete, so post data is always accessible via the 'post' reference
 });
 
 const Report = mongoose.model('Report', reportSchema);
@@ -61,19 +62,5 @@ const postModerationSchema = new mongoose.Schema({
 });
 
 const PostModeration = mongoose.model('PostModeration', postModerationSchema);
-
-// ============================================
-// UPDATE POST SCHEMA (add these fields)
-// ============================================
-// Add to your existing Post schema:
-// isHidden: { type: Boolean, default: false },
-// hiddenReason: { type: String, default: '' }
-
-// ============================================
-// UPDATE USER SCHEMA (add these fields)
-// ============================================
-// Add to your existing User schema:
-// isRestricted: { type: Boolean, default: false },
-// restrictionEnd: { type: Date, default: null }
 
 module.exports = { Report, UserRestriction, PostModeration };

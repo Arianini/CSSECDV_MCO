@@ -838,3 +838,53 @@
     font-size: 13px;
     font-weight: 500;
 }
+/* ============================================
+   DELETED POST NOTICE STYLES
+   ============================================ */
+
+.deleted-post-notice {
+    background: linear-gradient(135deg, #2a1a1a 0%, #3a2a2a 100%);
+    border: 2px dashed #dc3545;
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 10px;
+}
+
+.deleted-post-notice i.fa-trash-alt {
+    color: #dc3545;
+    font-size: 24px;
+    margin-right: 10px;
+}
+
+.deleted-post-notice p strong {
+    color: #dc3545;
+    font-size: 16px;
+}
+
+.deleted-post-notice .preview-content.snapshot {
+    margin-top: 15px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border-left: 3px solid #ffc107;
+}
+
+.deleted-post-notice .snapshot-label {
+    color: #ffc107;
+    font-size: 14px;
+    margin-bottom: 10px;
+    font-style: italic;
+}
+
+.deleted-post-notice .preview-image {
+    opacity: 0.7;
+    filter: grayscale(50%);
+}
+
+.deleted-post-notice .preview-text {
+    color: #ccc;
+}
+
+.deleted-post-notice .preview-text strong {
+    color: #fff;
+}

@@ -10,6 +10,9 @@
                 {{#if isOwner}}
                     <button onclick="event.stopPropagation(); editPost('{{_id}}')">✏ Edit</button>
                     <button onclick="event.stopPropagation(); deletePost('{{_id}}')">🗑 Delete</button>
+                {{else if canModerate}}
+                    <button onclick="event.stopPropagation(); deletePost('{{_id}}')">🗑 Delete (Moderator)</button>
+                    <button onclick="event.stopPropagation(); reportPost('{{_id}}')">⚠ Report</button>
                 {{else}}
                     <button onclick="event.stopPropagation(); reportPost('{{_id}}')">⚠ Report</button>
                 {{/if}}
@@ -76,9 +79,9 @@
         likes=this.likes 
         dislikes=this.dislikes 
         isOwner=this.isOwner
+        canModerate=this.canModerate
     }}
     {{/each}}
-
 </div>
 
 </div>

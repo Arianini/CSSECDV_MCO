@@ -118,7 +118,13 @@ const postSchema = new mongoose.Schema({
     isHidden: { type: Boolean, default: false },
     hiddenReason: { type: String, default: '' },
     hiddenBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    hiddenAt: { type: Date }
+    hiddenAt: { type: Date },
+    
+    // Soft delete fields
+    isDeleted: { type: Boolean, default: false },
+    deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    deletedAt: { type: Date },
+    deletionReason: { type: String, default: '' }
     // ===== END MODERATION FIELDS =====
 });
 
@@ -306,7 +312,7 @@ async function seedSecurityQuestions() {
         }
 
         console.log('✅ Security questions seeded successfully!');
-        console.log('\n📝 Default Security Answers by Role:');
+        console.log('\n🔑 Default Security Answers by Role:');
         console.log('   - Administrators: admin2024');
         console.log('   - Managers: manager2024');
         console.log('   - Users: user2024');

@@ -28,7 +28,7 @@ async function logModerationAction(userId, action, details, ipAddress = 'unknown
             timestamp: new Date()
         });
     } catch (error) {
-        console.error('Error logging action:', error);
+
     }
 }
 
@@ -60,7 +60,7 @@ function requireRole(roles) {
             req.currentUser = user;
             next();
         } catch (error) {
-            console.error('Error in requireRole:', error);
+
             return res.status(500).render('error', {
                 message: 'Internal server error'
             });
@@ -98,7 +98,7 @@ app.post('/report/post/:postId', requireAuth, async (req, res) => {
             return res.json({ error: 'You have already reported this post' });
         }
         
-        // Create report
+        // Create report (post uses soft delete, so it will always be accessible)
         const newReport = await Report.create({
             post: postId,
             reportedBy: userId,
@@ -120,10 +120,28 @@ app.post('/report/post/:postId', requireAuth, async (req, res) => {
 // MANAGER ROUTES - Handle Reports
 // ============================================
 
-// View all reports (pending first)
+// View all reports (pending first) - FILTERED BY MANAGED TAGS FOR MANAGERS
 app.get('/manager/reports', requireAuth, requireRole(['manager', 'administrator']), async (req, res) => {
     try {
-        const reports = await Report.find()
+        const currentUser = req.currentUser;
+        
+        let query = {};
+        
+        // If user is a manager, filter reports by tags they manage
+        if (currentUser.role === 'manager') {
+            // Get all posts with tags the manager moderates
+            const managedPosts = await Post.find({ 
+                postTag: { $in: currentUser.managedTags || [] } 
+            }).select('_id');
+            
+            const managedPostIds = managedPosts.map(post => post._id);
+            
+            // Filter reports to only include posts with managed tags
+            query = { post: { $in: managedPostIds } };
+        }
+        // Administrators see all reports (no filter)
+        
+        const reports = await Report.find(query)
             .populate('post')
             .populate('reportedBy', 'username profilePic')
             .populate({
@@ -134,16 +152,48 @@ app.get('/manager/reports', requireAuth, requireRole(['manager', 'administrator'
             .sort({ 
                 status: 1,  // pending first
                 createdAt: -1 
-            });
+            })
+            .lean(); // Convert to plain JavaScript objects
+        
+        // Convert ObjectIds to strings for Handlebars (posts are soft deleted, so they still exist)
+        const reportsWithStringIds = reports.map(report => ({
+            ...report,
+            _id: report._id.toString(),
+            post: report.post ? {
+                ...report.post,
+                _id: report.post._id.toString(),
+                user: report.post.user ? {
+                    ...report.post.user,
+                    _id: report.post.user._id.toString()
+                } : null
+            } : null,
+            reportedBy: report.reportedBy ? {
+                ...report.reportedBy,
+                _id: report.reportedBy._id.toString()
+            } : null,
+            handledBy: report.handledBy ? {
+                ...report.handledBy,
+                _id: report.handledBy._id.toString()
+            } : null
+        }));
+        
+        // Calculate counts for dashboard stats
+        const pendingCount = reportsWithStringIds.filter(r => 
+            r.status === 'pending' || r.status === 'escalated'
+        ).length;
+        const resolvedCount = reportsWithStringIds.filter(r => 
+            r.status === 'resolved' || r.status === 'dismissed'
+        ).length;
         
         res.render('manager-reports', { 
-            user: req.currentUser,
-            reports: reports 
+            user: currentUser,
+            reports: reportsWithStringIds,
+            pendingCount: pendingCount,
+            resolvedCount: resolvedCount
         });
-        
     } catch (error) {
-        console.error('Error fetching reports:', error);
-        console.error('Error stack:', error.stack);
+
+
         res.status(500).render('error', { 
             message: 'Failed to load reports: ' + error.message,
             user: req.currentUser 
@@ -154,31 +204,41 @@ app.get('/manager/reports', requireAuth, requireRole(['manager', 'administrator'
 // Handle a report (manager action)
 app.post('/manager/reports/:reportId/handle', requireAuth, requireRole(['manager', 'administrator']), async (req, res) => {
     try {
-        console.log('Handle report called:', { reportId: req.params.reportId, action: req.body.action });
+
         
         const reportId = req.params.reportId;
-        const { action, notes } = req.body;
+        const { action, notes, hours } = req.body;
         
         if (!action || !notes) {
-            console.error('Missing action or notes');
+
             return res.status(400).json({ error: 'Action and notes are required' });
         }
         
         const report = await Report.findById(reportId).populate('post');
         if (!report) {
-            console.error('Report not found:', reportId);
+
             return res.status(404).json({ error: 'Report not found' });
         }
         
         if (!report.post) {
-            console.error('Post not found for report:', reportId);
+
             return res.status(404).json({ error: 'Post associated with report not found' });
         }
         
         const managerId = req.session.userId;
+        const manager = await User.findById(managerId);
         const postAuthorId = report.post.user;
         
-        console.log('Processing action:', { action, managerId, postAuthorId });
+        // Check if manager has permission for this post's tag
+        if (manager.role === 'manager') {
+            const postTag = report.post.postTag;
+            if (!manager.managedTags || !manager.managedTags.includes(postTag)) {
+
+                return res.status(403).json({ error: 'You do not have permission to moderate this post' });
+            }
+        }
+        
+
         
         // Perform action based on type
         switch(action) {
@@ -208,12 +268,17 @@ app.post('/manager/reports/:reportId/handle', requireAuth, requireRole(['manager
                     resolvedAt: new Date()
                 });
                 
-                await logModerationAction(managerId, 'HIDE_POST', `Hid post ${report.post._id}. Reason: "${hideReason}". Changed isHidden: false → true`, getClientIp(req));
+                await logModerationAction(managerId, 'HIDE_POST', `Hid post ${report.post._id}. Reason: "${hideReason}". Changed isHidden: false Ã¢â€ â€™ true`, getClientIp(req));
                 break;
                 
             case 'delete_post':
-                // Delete the post
-                await Post.findByIdAndDelete(report.post._id);
+                // Soft delete the post (mark as deleted, don't remove from DB)
+                await Post.findByIdAndUpdate(report.post._id, {
+                    isDeleted: true,
+                    deletedBy: managerId,
+                    deletedAt: new Date(),
+                    deletionReason: notes || 'Removed by moderator'
+                });
                 
                 // Log moderation action
                 await PostModeration.create({
@@ -252,13 +317,17 @@ app.post('/manager/reports/:reportId/handle', requireAuth, requireRole(['manager
                     resolvedAt: new Date()
                 });
                 
-                await logModerationAction(managerId, 'WARN_USER', `Warned user ${postAuthorId}`, getClientIp(req));
+                await logModerationAction(managerId, 'WARN_USER', `Issued warning to user ${postAuthorId}`, getClientIp(req));
                 break;
                 
             case 'restrict_user':
-                // Restrict user for 48 hours
+                // Restrict user for specified hours (default 48, max 48 for managers)
+                const restrictHours = parseInt(hours) || 48;
+                const maxHours = 48;
+                const finalHours = Math.min(restrictHours, maxHours);
+                
                 const restrictionEnd = new Date();
-                restrictionEnd.setHours(restrictionEnd.getHours() + 48);
+                restrictionEnd.setHours(restrictionEnd.getHours() + finalHours);
                 
                 await UserRestriction.create({
                     user: postAuthorId,
@@ -278,7 +347,7 @@ app.post('/manager/reports/:reportId/handle', requireAuth, requireRole(['manager
                     resolvedAt: new Date()
                 });
                 
-                await logModerationAction(managerId, 'RESTRICT_USER', `Restricted user ${postAuthorId} for 48 hours`, getClientIp(req));
+                await logModerationAction(managerId, 'RESTRICT_USER', `Restricted user ${postAuthorId} for ${finalHours} hours. Reason: "${notes}". End date: ${restrictionEnd.toISOString()}`, getClientIp(req));
                 break;
                 
             case 'dismiss':
@@ -294,43 +363,50 @@ app.post('/manager/reports/:reportId/handle', requireAuth, requireRole(['manager
                 break;
                 
             default:
-                console.error('Invalid action:', action);
+
                 return res.status(400).json({ error: 'Invalid action' });
         }
         
-        console.log('Report handled successfully');
+
         res.json({ success: true, message: 'Report handled successfully' });
         
     } catch (error) {
-        console.error('Error handling report:', error);
-        console.error('Error stack:', error.stack);
+
+
         res.status(500).json({ error: 'Failed to handle report', details: error.message });
     }
 });
 
-// Escalate report to admin (manager only)
-app.post('/manager/reports/:reportId/escalate', requireAuth, requireRole('manager'), async (req, res) => {
+// Escalate report to admin
+app.post('/manager/reports/:reportId/escalate', requireAuth, requireRole(['manager', 'administrator']), async (req, res) => {
     try {
         const reportId = req.params.reportId;
         const { reason } = req.body;
+        
+        if (!reason) {
+            return res.status(400).json({ error: 'Reason for escalation is required' });
+        }
         
         const report = await Report.findById(reportId);
         if (!report) {
             return res.status(404).json({ error: 'Report not found' });
         }
         
-        // Update report to escalated status
+        // Update report status to escalated
         await Report.findByIdAndUpdate(reportId, {
             status: 'escalated',
-            adminNotes: `Escalated by manager: ${reason}`
+            escalationReason: reason,
+            escalatedBy: req.session.userId,
+            escalatedAt: new Date()
         });
         
-        await logModerationAction(req.session.userId, 'ESCALATE_REPORT', `Escalated report ${reportId} to admin`, getClientIp(req));
+        await logModerationAction(req.session.userId, 'ESCALATE_REPORT', 
+            `Escalated report ${reportId} to admin. Reason: "${reason}"`, getClientIp(req));
         
         res.json({ success: true, message: 'Report escalated to administrator' });
         
     } catch (error) {
-        console.error('Error escalating report:', error);
+
         res.status(500).json({ error: 'Failed to escalate report' });
     }
 });
@@ -339,66 +415,22 @@ app.post('/manager/reports/:reportId/escalate', requireAuth, requireRole('manage
 // ADMIN ROUTES - User Management
 // ============================================
 
-// Get admin user management page
-app.get('/admin/users', requireAuth, requireRole('administrator'), async (req, res) => {
-    try {
-        const users = await User.find().select('-password -passwordHistory -securityAnswer');
-        
-        // Check restriction status for each user
-        const usersWithStatus = await Promise.all(users.map(async (user) => {
-            const userObj = user.toObject();
-            
-            // Check if user has active restriction
-            const activeRestriction = await UserRestriction.findOne({
-                user: user._id,
-                isActive: true,
-                $or: [
-                    { endDate: null }, // Permanent ban
-                    { endDate: { $gte: new Date() } } // Temporary ban that hasn't expired
-                ]
-            });
-            
-            userObj.isRestricted = !!activeRestriction;
-            userObj.restrictionInfo = activeRestriction;
-            
-            return userObj;
-        }));
-        
-        res.render('admin-users', {
-            user: req.currentUser,
-            users: usersWithStatus
-        });
-        
-    } catch (error) {
-        console.error('Error fetching users:', error);
-        res.status(500).render('error', {
-            message: 'Failed to load users',
-            user: req.currentUser
-        });
-    }
-});
-
-// Permanent ban (admin only)
+// Permanently ban user (admin only)
 app.post('/admin/users/:userId/ban', requireAuth, requireRole('administrator'), async (req, res) => {
     try {
-        console.log('Ban user called:', { userId: req.params.userId, body: req.body });
+
         
         const userId = req.params.userId;
         const { reason } = req.body;
         
-        if (!reason) {
-            console.error('Missing reason');
-            return res.status(400).json({ error: 'Reason is required' });
-        }
-        
         // Check if user exists
         const user = await User.findById(userId);
         if (!user) {
-            console.error('User not found:', userId);
+
             return res.status(404).json({ error: 'User not found' });
         }
         
-        console.log('Creating permanent ban for user:', userId);
+
         
         // Create permanent restriction
         await UserRestriction.create({
@@ -412,14 +444,14 @@ app.post('/admin/users/:userId/ban', requireAuth, requireRole('administrator'), 
         });
         
         await logModerationAction(req.session.userId, 'PERMANENT_BAN', 
-            `Permanently banned user ${userId}. Reason: "${reason || 'Violated community guidelines'}". Restriction type: permanent_ban, isActive: false → true`);
+            `Permanently banned user ${userId}. Reason: "${reason || 'Violated community guidelines'}". Restriction type: permanent_ban, isActive: false Ã¢â€ â€™ true`);
         
-        console.log('User banned successfully');
+
         res.json({ success: true, message: 'User permanently banned' });
         
     } catch (error) {
-        console.error('Error banning user:', error);
-        console.error('Error stack:', error.stack);
+
+
         res.status(500).json({ error: 'Failed to ban user', details: error.message });
     }
 });
@@ -436,39 +468,45 @@ app.post('/admin/users/:userId/unban', requireAuth, requireRole('administrator')
         );
         
         await logModerationAction(req.session.userId, 'UNBAN_USER', 
-            `Unbanned user ${userId}. Changed isActive: true → false for restriction ${restriction._id}`);
+            `Unbanned user ${userId}. Changed isActive: true Ã¢â€ â€™ false`);
         
         res.json({ success: true, message: 'User unbanned successfully' });
         
     } catch (error) {
-        console.error('Error unbanning user:', error);
+
         res.status(500).json({ error: 'Failed to unban user' });
     }
 });
 
-// Temporary restrict user (admin only)
-app.post('/admin/users/:userId/restrict', requireAuth, requireRole('administrator'), async (req, res) => {
+// Temporary restrict user (manager - max 48 hours)
+app.post('/manager/users/:userId/restrict', requireAuth, requireRole(['manager', 'administrator']), async (req, res) => {
     try {
-        console.log('Restrict user called:', { userId: req.params.userId, body: req.body });
+
         
         const userId = req.params.userId;
         const { hours, reason } = req.body;
         
         if (!hours || !reason) {
-            console.error('Missing hours or reason');
+
             return res.status(400).json({ error: 'Hours and reason are required' });
         }
         
         const hoursNum = parseInt(hours);
         if (isNaN(hoursNum) || hoursNum <= 0) {
-            console.error('Invalid hours value:', hours);
+
             return res.status(400).json({ error: 'Invalid hours value' });
+        }
+        
+        // Manager restriction limit: max 48 hours
+        if (hoursNum > 48) {
+
+            return res.status(400).json({ error: 'Managers can only restrict users for up to 48 hours' });
         }
         
         // Check if user exists
         const user = await User.findById(userId);
         if (!user) {
-            console.error('User not found:', userId);
+
             return res.status(404).json({ error: 'User not found' });
         }
         
@@ -476,7 +514,7 @@ app.post('/admin/users/:userId/restrict', requireAuth, requireRole('administrato
         const endDate = new Date();
         endDate.setHours(endDate.getHours() + hoursNum);
         
-        console.log('Creating restriction:', { userId, hours: hoursNum, endDate });
+
         
         // Create temporary restriction
         await UserRestriction.create({
@@ -490,14 +528,70 @@ app.post('/admin/users/:userId/restrict', requireAuth, requireRole('administrato
         });
         
         await logModerationAction(req.session.userId, 'RESTRICT_USER', 
-            `Temporarily restricted user ${userId}. Duration: ${hoursNum} hours. Reason: "${reason || 'Temporary restriction'}". End date: ${endDate.toISOString()}. isActive: false → true`);
+            `Manager temporarily restricted user ${userId}. Duration: ${hoursNum} hours. Reason: "${reason || 'Temporary restriction'}". End date: ${endDate.toISOString()}. isActive: false Ã¢â€ â€™ true`);
         
-        console.log('User restricted successfully');
+
         res.json({ success: true, message: 'User restricted successfully' });
         
     } catch (error) {
-        console.error('Error restricting user:', error);
-        console.error('Error stack:', error.stack);
+
+
+        res.status(500).json({ error: 'Failed to restrict user', details: error.message });
+    }
+});
+
+// Temporary restrict user (admin only)
+app.post('/admin/users/:userId/restrict', requireAuth, requireRole('administrator'), async (req, res) => {
+    try {
+
+        
+        const userId = req.params.userId;
+        const { hours, reason } = req.body;
+        
+        if (!hours || !reason) {
+
+            return res.status(400).json({ error: 'Hours and reason are required' });
+        }
+        
+        const hoursNum = parseInt(hours);
+        if (isNaN(hoursNum) || hoursNum <= 0) {
+
+            return res.status(400).json({ error: 'Invalid hours value' });
+        }
+        
+        // Check if user exists
+        const user = await User.findById(userId);
+        if (!user) {
+
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        // Calculate end date based on hours
+        const endDate = new Date();
+        endDate.setHours(endDate.getHours() + hoursNum);
+        
+
+        
+        // Create temporary restriction
+        await UserRestriction.create({
+            user: userId,
+            restrictedBy: req.session.userId,
+            restrictionType: 'temporary_ban',
+            reason: reason || 'Temporary restriction',
+            startDate: new Date(),
+            endDate: endDate,
+            isActive: true
+        });
+        
+        await logModerationAction(req.session.userId, 'RESTRICT_USER', 
+            `Temporarily restricted user ${userId}. Duration: ${hoursNum} hours. Reason: "${reason || 'Temporary restriction'}". End date: ${endDate.toISOString()}. isActive: false Ã¢â€ â€™ true`);
+        
+
+        res.json({ success: true, message: 'User restricted successfully' });
+        
+    } catch (error) {
+
+
         res.status(500).json({ error: 'Failed to restrict user', details: error.message });
     }
 });
@@ -529,7 +623,7 @@ app.post('/admin/create-manager', requireAuth, requireRole('administrator'), asy
         res.json({ success: true, message: 'Manager account created successfully' });
         
     } catch (error) {
-        console.error('Error creating manager:', error);
+
         res.status(500).json({ error: 'Failed to create manager account' });
     }
 });
@@ -560,7 +654,7 @@ app.post('/admin/create-admin', requireAuth, requireRole('administrator'), async
         res.json({ success: true, message: 'Administrator account created successfully' });
         
     } catch (error) {
-        console.error('Error creating administrator:', error);
+
         res.status(500).json({ error: 'Failed to create administrator account' });
     }
 });
@@ -578,7 +672,7 @@ app.post('/admin/users/:userId/role', requireAuth, requireRole('administrator'),
         res.json({ success: true, message: 'User role updated successfully' });
         
     } catch (error) {
-        console.error('Error changing role:', error);
+
         res.status(500).json({ error: 'Failed to change user role' });
     }
 });
@@ -600,7 +694,7 @@ app.delete('/admin/users/:userId', requireAuth, requireRole('administrator'), as
         res.json({ success: true, message: 'User deleted successfully' });
         
     } catch (error) {
-        console.error('Error deleting user:', error);
+
         res.status(500).json({ error: 'Failed to delete user' });
     }
 });
