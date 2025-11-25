@@ -311,7 +311,7 @@ server.post('/login', async (req, res) => {
         // 2.1.3 - Generic error message (don't reveal if username exists)
         if (!user) {
             // Log failed attempt even if user doesn't exist
-            await logActivity(null, 'FAILED_LOGIN', 'USER', username, 
+            await logActivity(null, 'LOGIN_FAILED', 'USER', username, 
                             `Failed login attempt for non-existent user: ${username}`, 
                             getClientIp(req));
             
@@ -364,7 +364,7 @@ server.post('/login', async (req, res) => {
         req.session.showLoginMessage = true;
         
         // 2.1.5 - Log successful login
-        await logActivity(user._id, 'LOGIN', 'USER', user._id.toString(), 
+        await logActivity(user._id, 'LOGIN_SUCCESS', 'USER', user._id.toString(), 
                          `User logged in successfully`, getClientIp(req));
         
         res.redirect('/home');
