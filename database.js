@@ -4,13 +4,13 @@ require('dotenv').config(); // load .env
 
 // Single source of truth for the URI
 const uri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/tiktalk_db';
-console.log('[DB] Using URI:', uri);
+// console.log('[DB] Using URI:', uri);
 
 // Connect ONCE
 if (mongoose.connection.readyState === 0) {
   mongoose.connect(uri)
-    .then(() => console.log('✅ Connected to MongoDB'))
-    .catch(err => console.error('❌ MongoDB connection error:', err));
+    // .then(() => console.log('✅ Connected to MongoDB'))
+    // .catch(err => console.error('❌ MongoDB connection error:', err));
 }
 
 // ----- Schemas below -----
@@ -177,12 +177,12 @@ const sampleUsers = [
 const samplePosts = [
     {
         username: "john_doe",
-        caption: "Love this new recipe! ðŸ›",
+        caption: "Love this new recipe!",
         imageUrl: "https://hips.hearstapps.com/hmg-prod/images/190509-coconut-chicken-curry-157-1558039780.jpg?crop=1xw:0.8435280189423836xh;center,top&resize=1200:*",
         postTag: "Food",
         comments: [
             { username: "jane_smith", content: "Looks Yummy!" },
-            { username: "moderator_food", content: "Great post! ðŸ‘" }
+            { username: "moderator_food", content: "Great post!" }
         ]
     },
     {
@@ -197,7 +197,7 @@ const samplePosts = [
     },
     {
         username: "john_doe",
-        caption: "Beautiful sunset at the beach! ðŸŒ…",
+        caption: "Beautiful sunset at the beach!",
         imageUrl: "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/17/e0/ce/85/sunset-beach.jpg?w=1200&h=-1&s=1",
         postTag: "Travel",
         comments: [
@@ -214,20 +214,21 @@ async function seedUsers() {
             user.password = await bcrypt.hash(user.password, 10);
         }
         await User.insertMany(sampleUsers);
-        console.log('✅ Sample Users Added with Forum Roles');
-        console.log('   - Admin: admin/admin123');
-        console.log('   - Moderator (Food): moderator_food/mod123');
-        console.log('   - Moderator (Travel): moderator_travel/mod123');
-        console.log('   - Users: john_doe/user123, jane_smith/user123');
-    } else {
-        console.log('⚡ Users Already Exist');
+        // console.log('✅ Sample Users Added with Forum Roles');
+        // console.log('   - Admin: admin/admin123');
+        // console.log('   - Moderator (Food): moderator_food/mod123');
+        // console.log('   - Moderator (Travel): moderator_travel/mod123');
+        // console.log('   - Users: john_doe/user123, jane_smith/user123');
     }
+    // else {
+        // console.log('⚡ Users Already Exist');
+    // }
 }
 
 async function seedPosts() {
     const existingPosts = await Post.find();
     if (existingPosts.length === 0) {
-        console.log('⚡ Seeding posts...');
+        // console.log('⚡ Seeding posts...');
 
         const users = await User.find();
         const userMap = {};
@@ -249,13 +250,14 @@ async function seedPosts() {
         }));
 
         await Post.insertMany(formattedPosts);
-        console.log('✅ Sample Posts Added');
-    } else {
-        console.log('⚡ Posts Already Exist');
+        // console.log('✅ Sample Posts Added');
     }
+    // else {
+        // console.log('⚡ Posts Already Exist');
+    // }
 }
 
-// ðŸ†• SEED DEFAULT SECURITY QUESTIONS FOR EXISTING USERS
+// SEED DEFAULT SECURITY QUESTIONS FOR EXISTING USERS
 async function seedSecurityQuestions() {
     try {
         // Find users without security questions
@@ -268,11 +270,11 @@ async function seedSecurityQuestions() {
         });
 
         if (usersWithoutSecurity.length === 0) {
-            console.log('⚡ All users already have security questions');
+            // console.log('⚡ All users already have security questions');
             return;
         }
 
-        console.log(`⚡ Adding security questions to ${usersWithoutSecurity.length} users...`);
+        // console.log(`⚡ Adding security questions to ${usersWithoutSecurity.length} users...`);
 
         // Default security questions pool
         const defaultQuestions = [
@@ -308,26 +310,27 @@ async function seedSecurityQuestions() {
                 securityAnswer: hashedAnswer
             });
 
-            console.log(`   ✓ ${user.username} (${user.role}): "${question}" / Answer: "${answer}"`);
+            // console.log(`   ✓ ${user.username} (${user.role}): "${question}" / Answer: "${answer}"`);
         }
 
-        console.log('✅ Security questions seeded successfully!');
-        console.log('\n🔒 Default Security Answers by Role:');
-        console.log('   - Administrators: admin2024');
-        console.log('   - Managers: manager2024');
-        console.log('   - Users: user2024');
-        console.log('   (All answers are case-insensitive)\n');
+        // console.log('✅ Security questions seeded successfully!');
+        // console.log('\n🔒 Default Security Answers by Role:');
+        // console.log('   - Administrators: admin2024');
+        // console.log('   - Managers: manager2024');
+        // console.log('   - Users: user2024');
+        // console.log('   (All answers are case-insensitive)\n');
         
-    } catch (error) {
-        console.error('❌ Error seeding security questions:', error);
+    }
+    catch (error) {
+        // console.error(error);
     }
 }
 
 mongoose.connection.once('open', async () => {
-    console.log('🚀 MongoDB connection established.');
+    // console.log('🚀 MongoDB connection established.');
     await seedUsers();
     await seedPosts();
-    await seedSecurityQuestions(); // ðŸ†• Automatically add security Q&A to all users
+    await seedSecurityQuestions(); // Automatically add security Q&A to all users
 });
 
 const { Report, UserRestriction, PostModeration } = require('./moderation-schemas');

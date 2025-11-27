@@ -99,7 +99,7 @@ async function createUser(event) {
             submitBtn.disabled = false;
         }
     } catch (error) {
-        console.error('Error:', error);
+        // console.error('Error:', error);
         showNotification('Error', 'Failed to create user account', 'error');
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
@@ -241,7 +241,7 @@ async function submitRestrict(event) {
             showNotification('Error', data.error || 'Failed to restrict user', 'error');
         }
     } catch (error) {
-        console.error('Error:', error);
+        // console.error('Error:', error);
         showNotification('Error', 'Failed to restrict user', 'error');
     }
 }
@@ -296,7 +296,7 @@ async function submitBan(event) {
             showNotification('Error', data.error || 'Failed to ban user', 'error');
         }
     } catch (error) {
-        console.error('Error:', error);
+        // console.error('Error:', error);
         showNotification('Error', 'Failed to ban user', 'error');
     }
 }
@@ -322,7 +322,7 @@ async function unbanUser(userId, username) {
             showNotification('Error', data.error || 'Failed to unban user', 'error');
         }
     } catch (error) {
-        console.error('Error:', error);
+        // console.error('Error:', error);
         showNotification('Error', 'Failed to unban user', 'error');
     }
 }
@@ -390,7 +390,7 @@ async function submitRoleChange() {
             showNotification('Error', data.error || 'Failed to change role', 'error');
         }
     } catch (error) {
-        console.error('Error:', error);
+        // console.error('Error:', error);
         showNotification('Error', 'Failed to change role', 'error');
     }
 }
@@ -445,7 +445,7 @@ async function submitDelete(event) {
             showNotification('Error', data.error || 'Failed to delete user', 'error');
         }
     } catch (error) {
-        console.error('Error:', error);
+        // console.error('Error:', error);
         showNotification('Error', 'Failed to delete user', 'error');
     }
 }

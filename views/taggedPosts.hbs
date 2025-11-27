@@ -160,16 +160,16 @@
                 .then(data => {
                     document.getElementById("main-content").innerHTML = data;
                 })
-                .catch(error => console.log("Error loading page:", error));
+                .catch();
         }
 
         function toggleComments(postId) {
-            console.log("Toggling comments for:", postId); 
+            // console.log("Toggling comments for:", postId); 
 
             let commentSection = document.getElementById(`comments-${postId}`);
 
             if (commentSection) {
-                console.log("Comment section found:", commentSection);
+                // console.log("Comment section found:", commentSection);
 
                 if (commentSection.style.display === "none" || commentSection.style.display === "") {
                     commentSection.style.display = "block"; 
@@ -177,15 +177,16 @@
                     commentSection.style.display = "none"; 
                 }
 
-                console.log("New display state:", commentSection.style.display); 
-            } else {
-                console.error("Comment section not found for post:", postId);
+                // console.log("New display state:", commentSection.style.display); 
             }
+            // else
+                // console.error("Comment section not found for post:", postId);
+            // }
         }
 
         //added for delete comment
         function toggleCommentOptions(commentId) {
-            console.log("Toggling menu for comment ID:", commentId);
+            // console.log("Toggling menu for comment ID:", commentId);
             
             const allMenus = document.querySelectorAll(".comment-options-menu"); 
             allMenus.forEach(menu => {
@@ -198,9 +199,10 @@
             
             if (menu) {
                 menu.style.display = menu.style.display === "none" || menu.style.display === "" ? "block" : "none";
-            } else {
-                console.error(`Comment options menu NOT found for comment ID: ${commentId}`);
             }
+            // else
+                // console.error(`Comment options menu NOT found for comment ID: ${commentId}`);
+            // }
         }
 
 
@@ -208,8 +210,8 @@
             let commentInput = document.querySelector(`#comments-${postId} textarea`);
 
             if (!commentInput) {
-                console.error(`🚨 Error: Comment input field not found for post ${postId}`);
-                alert("Error: Comment box is missing.");
+                // console.error(`🚨 Error: Comment input field not found for post ${postId}`);
+                // alert("Error: Comment box is missing.");
                 return;
             }
 
@@ -252,18 +254,18 @@
                         newCommentDiv.innerHTML = commentHTML;
                         commentSection.appendChild(newCommentDiv);
                     })
-                    .catch(error => console.error("❌ Error rendering comment:", error));
+                    .catch();
                 } else {
                     alert("⚠ Failed to add comment.");
                 }
             })
-            .catch(error => console.error("❌ Error adding comment:", error));
+            .catch();
         }
 
         function openEditCommentModal(commentId) {
             const modal = document.getElementById(`edit-comment-modal-${commentId}`);
             if (!modal) {
-                console.error(`Modal not found for comment: ${commentId}`);
+                // console.error(`Modal not found for comment: ${commentId}`);
                 return;
             }
             modal.style.display = "flex";
@@ -300,7 +302,7 @@
                 }
             })
             .catch(error => {
-                console.error("Error deleting comment:", error);
+                // console.error("Error deleting comment:", error);
                 alert("❌ An error occurred while trying to delete the comment.");
             });
         }
@@ -308,7 +310,7 @@
         function toggleReplySection(commentId) {
             const replySection = document.getElementById(`reply-section-${commentId}`);
             if (!replySection) {
-                console.error(`Reply section not found for comment: ${commentId}`);
+                // console.error(`Reply section not found for comment: ${commentId}`);
                 return;
             }
             replySection.style.display = (replySection.style.display === "none" || replySection.style.display === "") ? "block" : "none";

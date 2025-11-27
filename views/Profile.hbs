@@ -42,12 +42,12 @@
             }
         }
          function toggleComments(postId) {
-            console.log("Toggling comments for:", postId); 
+            // console.log("Toggling comments for:", postId); 
 
             let commentSection = document.getElementById(`comments-${postId}`);
 
             if (commentSection) {
-                console.log("Comment section found:", commentSection);
+                // console.log("Comment section found:", commentSection);
 
                 if (commentSection.style.display === "none" || commentSection.style.display === "") {
                     commentSection.style.display = "block"; 
@@ -55,9 +55,10 @@
                     commentSection.style.display = "none"; 
                 }
 
-                console.log("New display state:", commentSection.style.display); 
-            } else {
-                console.error("Comment section not found for post:", postId);
+                // console.log("New display state:", commentSection.style.display); 
+            }
+            // else {
+                // console.error("Comment section not found for post:", postId);
             }
         }
 
@@ -73,7 +74,7 @@
     
             postCaption.innerHTML = `
                 <textarea id="edit-caption-${postId}" class="edit-caption">${originalText}</textarea>
-                <button onclick="saveEditPost('${postId}')">ðŸ’¾ Save</button>
+                <button onclick="saveEditPost('${postId}')">Save</button>
                 <button onclick="cancelEditPost('${postId}', \`${originalText}\`)">âŒ Cancel</button>
                 `;
         }
@@ -97,13 +98,14 @@
                     document.getElementById(`post-caption-${postId}`).innerHTML = `
                         <p id="caption-text-${postId}">${newCaption} (Edited)</p>
                         <textarea id="edit-caption-${postId}" class="edit-caption" style="display: none;">${newCaption}</textarea>
-                        <button id="save-edit-btn-${postId}" style="display: none;" onclick="saveEditPost('${postId}')">ðŸ’¾ Save</button>
+                        <button id="save-edit-btn-${postId}" style="display: none;" onclick="saveEditPost('${postId}')">Save</button>
                     `;
-                } else {
-                    alert(data.error);
                 }
+                // else {
+                    // alert(data.error);
+                // }
             })
-            .catch(err => console.error("Error saving edit:", err));
+            .catch();
         }
 
         function cancelEditPost(postId, originalText) {
@@ -124,11 +126,12 @@
                 if (data.success) {
                     document.getElementById(`post-${postId}`).remove();
                     alert("Post deleted successfully!");
-                } else {
-                    alert("Error: " + data.error);
                 }
+                // else {
+                    // alert("Error: " + data.error);
+                // }
             })
-            .catch(err => console.error("Error deleting post:", err));
+            .catch();
         }
 
         
@@ -289,7 +292,7 @@
                         .then(data => {
                             document.getElementById("profile-content").innerHTML = data;
                         })
-                        .catch(error => console.error("Error loading content:", error));
+                        .catch();
             });
             });
         });

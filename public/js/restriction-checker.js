@@ -20,7 +20,7 @@
             const response = await fetch('/api/check-restriction');
             
             if (!response.ok) {
-                console.error('Failed to check restriction status');
+                // console.error('Failed to check restriction status');
                 return;
             }
             
@@ -31,7 +31,7 @@
             }
             
         } catch (error) {
-            console.error('Error checking restriction status:', error);
+            // console.error('Error checking restriction status:', error);
         }
     }
     

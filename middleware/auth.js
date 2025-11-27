@@ -39,7 +39,7 @@ function isAdministrator(req, res, next) {
             });
         })
         .catch(err => {
-            console.error('Auth error:', err);
+            // console.error('Auth error:', err);
             res.status(500).send('Internal Server Error');
         });
 }
@@ -69,7 +69,7 @@ function isManager(req, res, next) {
             });
         })
         .catch(err => {
-            console.error('Auth error:', err);
+            // console.error('Auth error:', err);
             res.status(500).send('Internal Server Error');
         });
 }
@@ -381,7 +381,7 @@ async function checkAccess(req, requiredRole, resourceType = null, resourceId = 
         return { allowed: true };
 
     } catch (error) {
-        console.error('Access check error:', error);
+        // console.error('Access check error:', error);
         return {
             allowed: false,
             reason: 'SYSTEM_ERROR',
@@ -415,7 +415,7 @@ async function checkResourceAccess(user, resourceType, resourceId) {
                 return true;
         }
     } catch (error) {
-        console.error('Resource access check error:', error);
+        // console.error('Resource access check error:', error);
         return false;
     }
 }
@@ -502,7 +502,7 @@ function isAdministratorEnhanced(req, res, next) {
             });
         })
         .catch(err => {
-            console.error('Auth error:', err);
+            // console.error('Auth error:', err);
             res.status(500).render('error', {
                 message: 'System Error',
                 detail: 'An error occurred while verifying your permissions.',
@@ -541,7 +541,7 @@ function isManagerEnhanced(req, res, next) {
             });
         })
         .catch(err => {
-            console.error('Auth error:', err);
+            // console.error('Auth error:', err);
             res.status(500).render('error', {
                 message: 'System Error',
                 detail: 'An error occurred while verifying your permissions.',
@@ -590,7 +590,7 @@ function requirePermission(resourceType, action = 'read') {
             next();
 
         } catch (error) {
-            console.error('Permission check error:', error);
+            // console.error('Permission check error:', error);
             res.status(500).json({ 
                 success: false, 
                 error: 'An error occurred while checking permissions' 
@@ -666,23 +666,23 @@ async function canModeratePost(userId, postId) {
     try {
         const user = await User.findById(userId);
         if (!user) {
-            console.log('[canModeratePost] User not found:', userId);
+            // console.log('[canModeratePost] User not found:', userId);
             return false;
         }
         
-        console.log('[canModeratePost] Checking user:', {
-            userId,
-            role: user.role,
-            managedTags: user.managedTags
-        });
+        // console.log('[canModeratePost] Checking user:', {
+        //     userId,
+        //     role: user.role,
+        //     managedTags: user.managedTags
+        // });
         
         if (user.role === 'administrator') {
-            console.log('[canModeratePost] User is admin - ALLOWED');
+            // console.log('[canModeratePost] User is admin - ALLOWED');
             return true;
         }
         
         if (user.role === 'user') {
-            console.log('[canModeratePost] User is regular user - DENIED');
+            // console.log('[canModeratePost] User is regular user - DENIED');
             return false;
         }
         
@@ -690,24 +690,24 @@ async function canModeratePost(userId, postId) {
             const Post = require('../database').Post;
             const post = await Post.findById(postId);
             if (!post) {
-                console.log('[canModeratePost] Post not found:', postId);
+                // console.log('[canModeratePost] Post not found:', postId);
                 return false;
             }
             
             const canModerate = user.managedTags.includes(post.postTag);
-            console.log('[canModeratePost] Manager check:', {
-                postTag: post.postTag,
-                managedTags: user.managedTags,
-                canModerate
-            });
+            // console.log('[canModeratePost] Manager check:', {
+            //     postTag: post.postTag,
+            //     managedTags: user.managedTags,
+            //     canModerate
+            // });
             
             return canModerate;
         }
         
-        console.log('[canModeratePost] Unknown role - DENIED');
+        // console.log('[canModeratePost] Unknown role - DENIED');
         return false;
     } catch (err) {
-        console.error('Error checking moderation permission:', err);
+        // console.error('Error checking moderation permission:', err);
         return false;
     }
 }
@@ -725,7 +725,7 @@ async function canModerateTag(userId, tag) {
         
         return false;
     } catch (err) {
-        console.error('Error checking tag moderation permission:', err);
+        // console.error('Error checking tag moderation permission:', err);
         return false;
     }
 }
@@ -734,40 +734,40 @@ async function canEditOrDelete(userId, resourceOwnerId, postId = null) {
     try {
         const user = await User.findById(userId);
         if (!user) {
-            console.log('[canEditOrDelete] User not found:', userId);
+            // console.log('[canEditOrDelete] User not found:', userId);
             return false;
         }
         
-        console.log('[canEditOrDelete] Checking:', {
-            userId: userId.toString(),
-            resourceOwnerId: resourceOwnerId.toString(),
-            postId,
-            userRole: user.role
-        });
+        // console.log('[canEditOrDelete] Checking:', {
+        //     userId: userId.toString(),
+        //     resourceOwnerId: resourceOwnerId.toString(),
+        //     postId,
+        //     userRole: user.role
+        // });
         
         // Owner can always edit/delete their own content
         if (userId.toString() === resourceOwnerId.toString()) {
-            console.log('[canEditOrDelete] User is owner - ALLOWED');
+            // console.log('[canEditOrDelete] User is owner - ALLOWED');
             return true;
         }
         
         // Admin can edit/delete anything
         if (user.role === 'administrator') {
-            console.log('[canEditOrDelete] User is admin - ALLOWED');
+            // console.log('[canEditOrDelete] User is admin - ALLOWED');
             return true;
         }
         
         // Manager can edit/delete if they moderate the post's tag
         if (user.role === 'manager' && postId) {
             const canModerate = await canModeratePost(userId, postId);
-            console.log('[canEditOrDelete] Manager moderation check:', canModerate);
+            // console.log('[canEditOrDelete] Manager moderation check:', canModerate);
             return canModerate;
         }
         
-        console.log('[canEditOrDelete] No permission - DENIED');
+        // console.log('[canEditOrDelete] No permission - DENIED');
         return false;
     } catch (err) {
-        console.error('Error checking edit/delete permission:', err);
+        // console.error('Error checking edit/delete permission:', err);
         return false;
     }
 }
@@ -822,7 +822,7 @@ const attachUserInfo = async (req, res, next) => {
                 res.locals.originalAdminId = req.session.originalAdminId;
             }
         } catch (err) {
-            console.error('Error fetching user:', err);
+            // console.error('Error fetching user:', err);
         }
     }
     next();
@@ -888,7 +888,7 @@ async function checkUserRestriction(userId) {
         };
         
     } catch (error) {
-        console.error('Error checking user restriction:', error);
+        // console.error('Error checking user restriction:', error);
         return { restricted: false, restriction: null, message: null };
     }
 }

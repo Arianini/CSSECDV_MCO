@@ -107,7 +107,7 @@ setTimeout(function() {
 </div>
 
 <!-- ============================================
-     Ã°Å¸â€ â€¢ REPORT MODAL - ADD THIS SECTION
+     REPORT MODAL - ADD THIS SECTION
      ============================================ -->
 <div id="reportModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px);">
     <div class="report-modal-content" style="position: relative; background: #1f1f1f; width: 90%; max-width: 500px; margin: 100px auto; border-radius: 15px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5); animation: slideDown 0.3s ease-out;">
@@ -339,7 +339,7 @@ setTimeout(function() {
                 closeEditCommentModal(commentId);
             }
         } catch (err) {
-            console.error("Error editing comment:", err);
+            // console.error("Error editing comment:", err);
         }
     }
 
@@ -371,7 +371,7 @@ setTimeout(function() {
         }
     }
 
-    // Ã°Å¸â€ â€¢ REPORT POST FUNCTIONS
+    // REPORT POST FUNCTIONS
     function reportPost(postId) {
         openReportModal(postId);
     }
@@ -419,13 +419,13 @@ setTimeout(function() {
                 alert('Thank you! Your report has been submitted and will be reviewed by our moderation team.');
                 closeReportModal();
             } else {
-                alert(data.error || 'Failed to submit report. Please try again.');
+                // alert(data.error || 'Failed to submit report. Please try again.');
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
             }
         })
         .catch(error => {
-            console.error('Error:', error);
+            // console.error('Error:', error);
             alert('An error occurred. Please try again.');
             submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;

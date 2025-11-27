@@ -79,7 +79,7 @@ async function saveEditPost(postId) {
 }
 
 async function deletePost(postId) {
-    console.log('🔴 deletePost called for:', postId);
+    // console.log('🔴 deletePost called for:', postId);
     
     // Close the menu immediately
     const menu = document.getElementById(`options-menu-${postId}`);
@@ -87,7 +87,7 @@ async function deletePost(postId) {
         menu.style.display = 'none';
     }
     
-    console.log('🟡 Showing confirmation dialog...');
+    // console.log('🟡 Showing confirmation dialog...');
     
     try {
         const confirmed = await showConfirm(
@@ -95,14 +95,14 @@ async function deletePost(postId) {
             "Delete this post?"
         );
         
-        console.log('🟢 User confirmed:', confirmed);
+        // console.log('🟢 User confirmed:', confirmed);
         
         if (!confirmed) {
-            console.log('🔵 User cancelled deletion');
+            // console.log('🔵 User cancelled deletion');
             return;
         }
 
-        console.log('🟠 Proceeding with deletion...');
+        // console.log('🟠 Proceeding with deletion...');
         
         const response = await fetch(`/delete-post/${postId}`, {
             method: "DELETE",
@@ -119,7 +119,7 @@ async function deletePost(postId) {
             showError("Failed to delete post.");
         }
     } catch (error) {
-        console.error('❌ Error in deletePost:', error);
+        // console.error('❌ Error in deletePost:', error);
         showError("An error occurred while deleting the post.");
     }
 }
@@ -749,9 +749,10 @@ async function saveEditedReply(postId, commentId, replyId) {
             const replyText = document.getElementById(`reply-text-${replyId}`);
             if (replyText) {
                 replyText.textContent = result.updatedReply;
-            } else {
-                console.warn("reply-text element not found for:", replyId);
             }
+            // else {
+            //     console.warn("reply-text element not found for:", replyId);
+            // }
 
             closeEditReplyModal(replyId);
             showSuccess("Reply updated successfully!");
@@ -836,7 +837,7 @@ function startRestrictionCheck() {
     if (userRole === 'user') {
         // Check every 10 seconds
         restrictionCheckInterval = setInterval(checkRestrictionStatus, 10000);
-        console.log('✅ Restriction checker started (checking every 10 seconds)');
+        // console.log('✅ Restriction checker started (checking every 10 seconds)');
     }
 }
 
@@ -848,7 +849,7 @@ async function checkRestrictionStatus() {
         });
         
         if (!response.ok) {
-            console.error('Failed to check restriction status');
+            // console.error('Failed to check restriction status');
             return;
         }
         
@@ -882,7 +883,7 @@ async function checkRestrictionStatus() {
             }, 3000);
         }
     } catch (error) {
-        console.error('Error checking restriction status:', error);
+        // console.error('Error checking restriction status:', error);
     }
 }
 
@@ -900,4 +901,4 @@ window.addEventListener('beforeunload', () => {
     }
 });
 
-console.log('✅ Restriction checker loaded');
+// console.log('✅ Restriction checker loaded');

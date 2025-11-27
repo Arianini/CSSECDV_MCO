@@ -268,7 +268,7 @@ app.post('/manager/reports/:reportId/handle', requireAuth, requireRole(['manager
                     resolvedAt: new Date()
                 });
                 
-                await logModerationAction(managerId, 'HIDE_POST', `Hid post ${report.post._id}. Reason: "${hideReason}". Changed isHidden: false Ã¢â€ â€™ true`, getClientIp(req));
+                await logModerationAction(managerId, 'HIDE_POST', `Hid post ${report.post._id}. Reason: "${hideReason}". Changed isHidden: false to true`, getClientIp(req));
                 break;
                 
             case 'delete_post':
@@ -444,7 +444,7 @@ app.post('/admin/users/:userId/ban', requireAuth, requireRole('administrator'), 
         });
         
         await logModerationAction(req.session.userId, 'PERMANENT_BAN', 
-            `Permanently banned user ${userId}. Reason: "${reason || 'Violated community guidelines'}". Restriction type: permanent_ban, isActive: false Ã¢â€ â€™ true`);
+            `Permanently banned user ${userId}. Reason: "${reason || 'Violated community guidelines'}". Restriction type: permanent_ban, isActive: false to true`);
         
 
         res.json({ success: true, message: 'User permanently banned' });
@@ -468,7 +468,7 @@ app.post('/admin/users/:userId/unban', requireAuth, requireRole('administrator')
         );
         
         await logModerationAction(req.session.userId, 'UNBAN_USER', 
-            `Unbanned user ${userId}. Changed isActive: true Ã¢â€ â€™ false`);
+            `Unbanned user ${userId}. Changed isActive: true to false`);
         
         res.json({ success: true, message: 'User unbanned successfully' });
         
@@ -528,7 +528,7 @@ app.post('/manager/users/:userId/restrict', requireAuth, requireRole(['manager',
         });
         
         await logModerationAction(req.session.userId, 'RESTRICT_USER', 
-            `Manager temporarily restricted user ${userId}. Duration: ${hoursNum} hours. Reason: "${reason || 'Temporary restriction'}". End date: ${endDate.toISOString()}. isActive: false Ã¢â€ â€™ true`);
+            `Manager temporarily restricted user ${userId}. Duration: ${hoursNum} hours. Reason: "${reason || 'Temporary restriction'}". End date: ${endDate.toISOString()}. isActive: false to true`);
         
 
         res.json({ success: true, message: 'User restricted successfully' });
@@ -584,7 +584,7 @@ app.post('/admin/users/:userId/restrict', requireAuth, requireRole('administrato
         });
         
         await logModerationAction(req.session.userId, 'RESTRICT_USER', 
-            `Temporarily restricted user ${userId}. Duration: ${hoursNum} hours. Reason: "${reason || 'Temporary restriction'}". End date: ${endDate.toISOString()}. isActive: false Ã¢â€ â€™ true`);
+            `Temporarily restricted user ${userId}. Duration: ${hoursNum} hours. Reason: "${reason || 'Temporary restriction'}". End date: ${endDate.toISOString()}. isActive: false to true`);
         
 
         res.json({ success: true, message: 'User restricted successfully' });

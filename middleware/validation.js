@@ -426,7 +426,7 @@ function logValidationFailure(req, fieldName, inputValue, errorMessage) {
             ipAddress
         );
     } catch (err) {
-        console.error('Error logging validation failure:', err);
+        // console.error('Error logging validation failure:', err);
     }
 }
 

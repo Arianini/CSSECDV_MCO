@@ -64,11 +64,11 @@ class NotificationSystem {
     }
 
     showConfirm(options) {
-        console.log('🟦 showConfirm called with options:', options);
+        // // console.log('🟦 showConfirm called with options:', options);
         return new Promise((resolve) => {
             const overlay = document.getElementById('notification-overlay');
             if (!overlay) {
-                console.error('❌ Overlay not found!');
+                // console.error('❌ Overlay not found!');
                 resolve(false);
                 return;
             }
@@ -96,26 +96,26 @@ class NotificationSystem {
             overlay.appendChild(modal);
             overlay.classList.add('active');
             
-            console.log('✅ Modal added to DOM and made active');
+            // console.log('✅ Modal added to DOM and made active');
 
             const yesBtn = modal.querySelector('.confirm-btn.yes');
             const noBtn = modal.querySelector('.confirm-btn.no');
 
             if (!yesBtn || !noBtn) {
-                console.error('❌ Buttons not found!');
+                // console.error('❌ Buttons not found!');
                 resolve(false);
                 return;
             }
 
             yesBtn.onclick = function(e) {
-                console.log('✅ YES clicked');
+                // console.log('✅ YES clicked');
                 e.stopPropagation();
                 overlay.classList.remove('active');
                 resolve(true);
             };
 
             noBtn.onclick = function(e) {
-                console.log('❌ NO clicked');
+                // console.log('❌ NO clicked');
                 e.stopPropagation();
                 overlay.classList.remove('active');
                 resolve(false);
@@ -124,7 +124,7 @@ class NotificationSystem {
             // Close on overlay click (defaults to No)
             overlay.onclick = function(e) {
                 if (e.target === overlay) {
-                    console.log('❌ Clicked outside (treated as NO)');
+                    // console.log('❌ Clicked outside (treated as NO)');
                     overlay.classList.remove('active');
                     resolve(false);
                 }
@@ -175,15 +175,15 @@ function showInfo(message, title = 'Info') {
 }
 
 async function showConfirm(message, title = 'Confirm Action') {
-    console.log('🔵 showConfirm called with:', { message, title });
+    // console.log('🔵 showConfirm called with:', { message, title });
     const result = await notify.showConfirm({
         title: title,
         message: message,
         yesText: 'Yes',
         noText: 'Cancel'
     });
-    console.log('🔵 showConfirm returning:', result);
+    // console.log('🔵 showConfirm returning:', result);
     return result;
 }
 
-console.log('✅ Notification system loaded');
+// console.log('✅ Notification system loaded');

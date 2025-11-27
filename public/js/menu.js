@@ -1,6 +1,6 @@
 // menu.js - Reusable menu dropdown and header functionality
 document.addEventListener("DOMContentLoaded", function () {
-    console.log("🚀 Menu script loaded");
+    // console.log("🚀 Menu script loaded");
     
     // ===== MENU DROPDOWN =====
     const menuBtn = document.getElementById("menu-btn");
@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
         
-        console.log("✅ Menu handlers attached");
+        // console.log("✅ Menu handlers attached");
     }
 
     // ===== PROFILE BUTTON =====
@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", function () {
         profileBtn.addEventListener("click", function() {
             window.location.href = "/profile";
         });
-        console.log("✅ Profile button ready");
+        // console.log("✅ Profile button ready");
     }
 
     // ===== CREATE POST BUTTON =====
@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 modal.style.display = 'flex';
             }
         });
-        console.log("✅ Create post button ready");
+        // console.log("✅ Create post button ready");
     }
 
     // ===== SEARCH FUNCTIONALITY =====
@@ -71,8 +71,8 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
         
-        console.log("✅ Search ready");
+        // console.log("✅ Search ready");
     }
     
-    console.log("🎉 All header functionality initialized!");
+    // console.log("🎉 All header functionality initialized!");
 });

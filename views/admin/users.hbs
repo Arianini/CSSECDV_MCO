@@ -1025,7 +1025,7 @@
                 showError('Creation Failed', data.error || 'Failed to create user');
             }
         } catch (error) {
-            console.error('Error:', error);
+            // console.error('Error:', error);
             showError('Network Error', 'Failed to create user. Please try again.');
         }
     });
@@ -1054,7 +1054,7 @@
                 showError('Update Failed', data.error || 'Failed to update user role');
             }
         } catch (error) {
-            console.error('Error:', error);
+            // console.error('Error:', error);
             showError('Network Error', 'Failed to update user role. Please try again.');
         }
     });
@@ -1079,7 +1079,7 @@
                         showError('Deletion Failed', data.error || 'Failed to delete user');
                     }
                 } catch (error) {
-                    console.error('Error:', error);
+                    // console.error('Error:', error);
                     showError('Network Error', 'Failed to delete user. Please try again.');
                 }
             },
